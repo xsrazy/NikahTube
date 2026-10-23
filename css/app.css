@@ -68,15 +68,56 @@ button{font-family:inherit;cursor:pointer}
   padding:12px 20px;background:rgba(15,15,15,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);
 }
 .top-guest{color:var(--sub);font-size:12.5px;font-weight:500;max-width:45%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.watch{
-  max-width:1750px;margin:0 auto;display:grid;gap:24px;
-  grid-template-columns:minmax(0,1fr) 380px;
-  padding:24px 24px 56px;align-items:start;
+
+/* ---------- CHANNEL HEADER + TABS ---------- */
+.channel-banner{position:relative;height:clamp(110px,17vw,160px);overflow:hidden;background:#000}
+.channel-banner img{width:100%;height:100%;object-fit:cover}
+.channel-banner::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(0,0,0,.45))}
+.channel-bar{border-bottom:1px solid var(--line)}
+.channel-bar .channel-row{max-width:1750px;margin:0 auto;padding:14px 24px}
+.channel-tabs{
+  position:sticky;top:44px;z-index:15;background:rgba(15,15,15,.97);
+  border-bottom:1px solid var(--line);
 }
-.watch-main{min-width:0;display:flex;flex-direction:column;gap:16px}
-.watch-main > *{margin:0}
-@media (max-width:1000px){
-  .watch{grid-template-columns:minmax(0,1fr);padding:16px 14px 48px}
+.tabs-inner{max-width:1750px;margin:0 auto;padding:0 24px;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.tabs-inner::-webkit-scrollbar{display:none}
+.ctab{
+  background:none;border:none;color:var(--sub);font-size:14px;font-weight:500;font-family:inherit;
+  padding:12px 14px;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer;
+}
+.ctab:hover{color:var(--txt)}
+.ctab.active{color:var(--txt);border-bottom-color:var(--txt)}
+@media (max-width:1023px){
+  .channel-bar .channel-row{padding:12px 14px}
+  .tabs-inner{padding:0 14px}
+}
+.watch{
+  max-width:1750px;margin:0 auto;display:grid;gap:16px 24px;align-items:start;
+  grid-template-columns:minmax(0,1fr) 380px;
+  grid-template-areas:
+    "stage aside"
+    "premiere aside"
+    "title aside"
+    "desc aside"
+    "shorts aside"
+    "artists aside"
+    "comments aside";
+  padding:24px 24px 56px;
+}
+.stage{grid-area:stage}
+.countdown-card{grid-area:premiere}
+.title-block{grid-area:title}
+.desc-card{grid-area:desc}
+.shorts-sec{grid-area:shorts}
+.artists-card{grid-area:artists}
+.comments-card{grid-area:comments}
+.watch-aside{grid-area:aside;align-self:start;min-width:0}
+.stage,.watch-aside,.desc-card,.comments-card{scroll-margin-top:104px}
+@media (max-width:1023px){
+  .watch{
+    grid-template-columns:minmax(0,1fr);padding:16px 14px 48px;
+    grid-template-areas:"stage" "premiere" "title" "desc" "shorts" "aside" "artists" "comments";
+  }
 }
 
 /* ---------- VIDEO STAGE ---------- */
@@ -94,8 +135,6 @@ button{font-family:inherit;cursor:pointer}
 .stage-meta{flex:1;min-width:0}
 .stage-title{font-weight:500;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .stage-artist{color:#d6d6d6;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.like-btn{background:none;border:none;color:#fff;font-size:21px;line-height:1;padding:5px;flex:none}
-.like-btn.liked{color:var(--red)}
 
 /* ---------- CARDS ---------- */
 .card{background:var(--panel);border-radius:12px;padding:18px}
@@ -148,7 +187,25 @@ button{font-family:inherit;cursor:pointer}
 .sub-btn:hover{background:#fff}
 .sub-btn.subscribed{background:var(--chip);color:var(--txt)}
 .sub-btn:disabled{opacity:.6;cursor:default}
-.share-row{margin-top:2px}
+
+/* action chips row */
+.actions-row{
+  display:flex;align-items:center;gap:8px;overflow-x:auto;padding-bottom:4px;
+  scrollbar-width:none;
+}
+.actions-row::-webkit-scrollbar{display:none}
+.chip-btn{
+  display:inline-flex;align-items:center;gap:7px;flex:none;
+  background:var(--chip);color:var(--txt);border:1px solid transparent;border-radius:999px;
+  padding:9px 15px;font-weight:500;font-size:13.5px;font-family:inherit;
+  text-decoration:none;cursor:pointer;
+  transition:background .12s ease,transform .12s ease;
+}
+.chip-btn:hover{background:rgba(255,255,255,.16)}
+.chip-btn:active{transform:scale(.97)}
+.chip-btn .chip-ico{width:18px;height:18px;fill:currentColor;flex:none}
+.like-chip.liked{background:#f1f1f1;color:#0f0f0f}
+.chip-static{flex:none;color:var(--sub);font-size:13px;font-weight:500;padding:0 2px}
 
 /* ---------- DESCRIPTION ---------- */
 .track{display:flex;align-items:center;gap:12px;padding:10px 8px;border-radius:12px}
@@ -169,6 +226,18 @@ button{font-family:inherit;cursor:pointer}
 .lyrics-text{font-size:14.5px;line-height:1.6;font-weight:400}
 .lyrics-src{margin-top:8px;font-size:12.5px;font-weight:500;color:var(--sub)}
 
+/* description collapse */
+.desc-summary{font-size:14px;line-height:1.55}
+.desc-sum-main{font-weight:500}
+.desc-sum-sub{color:var(--sub);font-size:13px}
+.desc-body{margin-top:6px}
+.desc-card.desc-collapsed .desc-body{display:none}
+.desc-toggle{
+  background:none;border:none;color:var(--txt);font-size:13.5px;font-weight:500;font-family:inherit;
+  padding:10px 0 0;cursor:pointer;
+}
+.desc-toggle:hover{text-decoration:underline}
+
 /* gift */
 .gift{background:var(--panel2);border-radius:12px;padding:16px;margin-top:14px}
 .gift-name{font-weight:700;font-size:15px}
@@ -184,6 +253,29 @@ button{font-family:inherit;cursor:pointer}
 .wstat-red .w-lab{color:rgba(255,255,255,.8)}
 .w-num{font-weight:700;font-size:21px;line-height:1.15;overflow-wrap:break-word}
 .w-lab{color:var(--sub);font-size:12px;margin-top:4px;line-height:1.4}
+
+/* ---------- SHORTS ---------- */
+.shorts-sec{min-width:0}
+.shorts-head{display:flex;align-items:center;gap:9px;margin-bottom:12px;padding:0 2px}
+.shorts-head h3{font-weight:700;font-size:18px}
+.shorts-row{
+  display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;
+  scroll-snap-type:x mandatory;scrollbar-width:thin;
+}
+.short-item{
+  position:relative;flex:none;width:150px;aspect-ratio:9/16;border-radius:12px;overflow:hidden;
+  scroll-snap-align:start;text-decoration:none;background:var(--panel);display:block;
+}
+.short-item img{width:100%;height:100%;object-fit:cover}
+.short-dur{
+  position:absolute;top:6px;right:6px;background:rgba(0,0,0,.85);color:#fff;
+  font-size:11px;font-weight:500;padding:2px 5px;border-radius:4px;font-variant-numeric:tabular-nums;
+}
+.short-cap{
+  position:absolute;left:0;right:0;bottom:0;color:#fff;font-size:12.5px;font-weight:500;
+  padding:18px 9px 8px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.82));
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
 
 /* ---------- ARTISTS ---------- */
 .artist{display:flex;align-items:center;gap:12px;padding:10px 4px}
@@ -224,6 +316,7 @@ textarea.f-in{resize:vertical}
 .wish-actions{display:inline-flex;gap:13px;align-items:center}
 .wish-act{background:none;border:0;color:var(--sub);font:inherit;font-size:12px;font-weight:500;cursor:pointer;padding:2px 0}
 .wish-act:hover{color:#fff}
+.wish-act.armed{color:#ff6b6b;font-weight:700}
 .wish-act:disabled{opacity:.5;cursor:default}
 .wish-act.liked,.wish-like.liked{color:var(--red)}
 .wish-replies{margin-top:10px;display:flex;flex-direction:column;gap:10px;border-left:2px solid rgba(255,255,255,.12);padding-left:12px}
@@ -232,6 +325,21 @@ textarea.f-in{resize:vertical}
 .wish-form-btns .btn{padding:8px 16px;font-size:13px}
 .wish-empty{color:var(--sub);font-size:13px;margin-top:14px;text-align:center}
 .wish-empty.off{display:none}
+
+/* comment composer + filters */
+.composer-row{display:flex;gap:11px;align-items:flex-start}
+.composer-ava{
+  width:38px;height:38px;border-radius:50%;background:var(--red);color:#fff;flex:none;
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;margin-top:2px;
+}
+.composer-lab{flex:1;min-width:0}
+.wish-filters{display:flex;gap:8px;margin-top:16px}
+.filter-chip{
+  background:var(--chip);color:var(--txt);border:1px solid transparent;border-radius:8px;
+  padding:7px 13px;font-size:13px;font-weight:500;font-family:inherit;cursor:pointer;
+}
+.filter-chip:hover{background:rgba(255,255,255,.16)}
+.filter-chip.active{background:#f1f1f1;color:#0f0f0f}
 
 /* ---------- UP NEXT ---------- */
 .aside-head{font-weight:700;font-size:16px;margin-bottom:12px}

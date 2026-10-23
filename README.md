@@ -18,12 +18,14 @@ Everything on the page is managed from the admin dashboard: the couple's names, 
 ## Features
 
 - **Premiere gate**: the invitation opens from a 16:9 video thumbnail with a big play button, a PREMIERE badge, and a live countdown.
-- **Video stage**: a player-style stage (play/pause, red progress bar, timestamps, like button) that actually plays the background music.
+- **Channel header**: a banner strip and channel row (avatar, verified channel name, live subscriber count, Subscribe button) with a tab bar (Beranda / Video / Playlist / Komunitas) that smooth-scrolls to each section; the Playlist tab also expands the description.
+- **Video stage**: a player-style stage (play/pause, red progress bar, timestamps, like button) that actually plays the background music, in a two-column watch layout with the Up Next sidebar on desktop.
 - **Countdown and Set Reminder**: a live countdown to the wedding day; "Set Reminder" opens Google Calendar (Save the Date), next to a Google Maps button for the venue.
-- **Real Subscribe**: the channel Subscribe button is recorded per visitor in the backend (subscribe/unsubscribe toggle) and the subscriber count updates live. Each partner also has an individual Follow button in the About section.
-- **Comments as guestbook**: post wishes with an RSVP status, like, reply (nested), edit, and delete your own comments. A built-in bad-word filter is included.
+- **Real Subscribe**: the channel Subscribe button follows both partners at once and is recorded per visitor in the backend (subscribe/unsubscribe toggle); the subscriber count is the couple's combined fan count and updates live. Each partner also has an individual Follow button in the About section.
+- **Comments as guestbook**: post wishes with an RSVP status, like, reply (nested), edit, and delete your own comments (two-step inline confirm, no dialog). Filter chips switch between all comments and newest first. A built-in bad-word filter is included.
 - **Up Next gallery**: the sidebar lists gallery photos as video thumbnails, complete with fake durations.
-- **Full description box**: event chapters (ceremony and reception), venue and address, dress code, a holy verse, "channel" statistics, and love gift accounts (SeaBank and DANA) with working copy buttons.
+- **Shorts row**: the same gallery photos appear again as vertical 9:16 Shorts cards in a horizontal row; clicking one opens the full photo.
+- **Collapsible description box**: starts collapsed behind a "...selengkapnya" toggle and holds event chapters (ceremony and reception), venue and address, dress code, a holy verse, "channel" statistics, and love gift accounts (SeaBank and DANA) with working copy buttons.
 - **Admin dashboard**: secure login (scrypt-hashed password, JWT with revocation), a Web Content tab that edits everything on the page, media uploads (images are downscaled and re-encoded to WebP in the browser, audio up to 3 MB), guest list management, statistics, CSV export, and access-key rotation.
 - **SEO ready**: Open Graph and Twitter Card metadata, canonical URL, sitemap, and JSON-LD. Every `*.vercel.app` host permanently redirects to the main domain, and unknown paths bounce back to the homepage.
 

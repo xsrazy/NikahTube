@@ -74,13 +74,14 @@ playBtn.addEventListener("click", () => {
 audio.addEventListener("play", setPlayIcon);
 audio.addEventListener("pause", setPlayIcon);
 audio.addEventListener("loadedmetadata", () => { durTime.textContent = fmt(audio.duration); });
+audio.addEventListener("durationchange", () => { durTime.textContent = fmt(audio.duration); });
+if (audio.readyState >= 1 && isFinite(audio.duration) && audio.duration > 0) durTime.textContent = fmt(audio.duration);
 audio.addEventListener("timeupdate", () => {
   curTime.textContent = fmt(audio.currentTime);
   if (audio.duration) playerBar.style.width = (audio.currentTime / audio.duration * 100) + "%";
 });
 $("#likeBtn").addEventListener("click", (e) => {
   e.currentTarget.classList.toggle("liked");
-  e.currentTarget.textContent = e.currentTarget.classList.contains("liked") ? "♥" : "♡";
 });
 
 // ---- Buka undangan ----
@@ -279,10 +280,23 @@ function wishHtml(w) {
   return h;
 }
 
+let wishSort = "all";
 function renderWishes() {
   const box = $("#wishList");
   $("#wishEmpty").classList.toggle("off", wishes.length > 0);
-  box.innerHTML = wishes.map((w) => wishHtml(w)).join("");
+  let list = wishes;
+  if (wishSort === "new") {
+    const times = wishes.map((w) => Date.parse(w.created_at || ""));
+    if (times.every((t) => !isNaN(t))) {
+      list = wishes
+        .map((w, i) => ({ w, t: times[i] }))
+        .sort((a, b) => b.t - a.t)
+        .map((p) => p.w);
+    } else {
+      list = [...wishes].reverse();
+    }
+  }
+  box.innerHTML = list.map((w) => wishHtml(w)).join("");
 }
 
 async function loadWishes() {
@@ -350,7 +364,20 @@ $("#wishList").addEventListener("click", async (e) => {
   if (delBtn) {
     const uuid = delBtn.dataset.del;
     const ownMap = store.get(OWN_KEY);
-    if (!ownMap[uuid] || !confirm("Hapus ucapan ini?")) return;
+    if (!ownMap[uuid]) return;
+    if (!delBtn.dataset.armed) {
+      delBtn.dataset.armed = "1";
+      delBtn.textContent = "Yakin hapus?";
+      delBtn.classList.add("armed");
+      setTimeout(() => {
+        if (delBtn.isConnected) {
+          delete delBtn.dataset.armed;
+          delBtn.textContent = "Hapus";
+          delBtn.classList.remove("armed");
+        }
+      }, 3500);
+      return;
+    }
     try {
       const res = await fetch("/api/comment/" + encodeURIComponent(ownMap[uuid]), {
         method: "DELETE", headers: { "x-access-key": ACCESS_KEY },
@@ -448,6 +475,47 @@ $("#wishForm").addEventListener("submit", async (e) => {
   }
 });
 
+// ---- Filter komentar (Semua / Terbaru) ----
+const chipAll = $("#chipAll");
+const chipNew = $("#chipNew");
+function setWishSort(mode) {
+  wishSort = mode;
+  if (chipAll) chipAll.classList.toggle("active", mode === "all");
+  if (chipNew) chipNew.classList.toggle("active", mode === "new");
+  renderWishes();
+}
+if (chipAll) chipAll.addEventListener("click", () => setWishSort("all"));
+if (chipNew) chipNew.addEventListener("click", () => setWishSort("new"));
+
+// ---- Deskripsi: buka / tutup ----
+const descToggle = $("#descToggle");
+if (descToggle) {
+  descToggle.addEventListener("click", () => {
+    const card = descToggle.closest(".desc-card");
+    if (!card) return;
+    const collapsed = card.classList.toggle("desc-collapsed");
+    descToggle.textContent = collapsed ? "...selengkapnya" : "Tutup";
+    descToggle.setAttribute("aria-expanded", String(!collapsed));
+  });
+}
+
+// ---- Tab channel: gulir ke bagian ----
+$$(".ctab").forEach((tab) => {
+  tab.addEventListener("click", () => {
+    $$(".ctab").forEach((t) => t.classList.toggle("active", t === tab));
+    const target = document.querySelector(tab.dataset.target);
+    if (!target) return;
+    if (target.classList.contains("desc-collapsed")) {
+      target.classList.remove("desc-collapsed");
+      if (descToggle) {
+        descToggle.textContent = "Tutup";
+        descToggle.setAttribute("aria-expanded", "true");
+      }
+    }
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+});
+
 // ---- Terapkan konten dari backend ----
 function maskNumber(num) {
   const last4 = String(num).slice(-4);
@@ -475,6 +543,8 @@ function applySite() {
   setText("#playerArtist", SITE.music_artist || duo);
   setText("#npMetaText", SITE.wrapped_match + " match • " + year + " • Single • Untuk: ");
   setText("#cdDate", SITE.date_label + " • " + SITE.venue_name);
+  setText(".desc-sum-main", SITE.date_label + " • " + SITE.venue_name);
+  setText(".desc-sum-sub", SITE.akad_desc + " " + SITE.akad_time + " • " + SITE.resepsi_desc + " " + SITE.resepsi_time);
   setText("#track1Title", SITE.akad_desc);
   setText("#track1Meta", SITE.date_label + " • " + SITE.akad_time + " • " + SITE.venue_name);
   setText("#track1Dur", durLabel(SITE.akad_time));
@@ -486,14 +556,13 @@ function applySite() {
   setText("#chip1", "Dress code: " + SITE.dress_1);
   setText("#chip2", SITE.dress_2);
   const maps = $("#mapsBtn"); if (maps) maps.href = SITE.maps_url;
-  const cal = $("#calBtn");
-  if (cal) {
-    cal.href = "https://calendar.google.com/calendar/render?action=TEMPLATE&text=" +
-      encodeURIComponent(SITE.akad_desc + " " + duo) +
-      "&dates=" + SITE.cal_start + "/" + SITE.cal_end +
-      "&details=" + encodeURIComponent(SITE.akad_desc + " " + duo + " di " + SITE.venue_name) +
-      "&location=" + encodeURIComponent(SITE.venue_name);
-  }
+  const calUrl = "https://calendar.google.com/calendar/render?action=TEMPLATE&text=" +
+    encodeURIComponent(SITE.akad_desc + " " + duo) +
+    "&dates=" + SITE.cal_start + "/" + SITE.cal_end +
+    "&details=" + encodeURIComponent(SITE.akad_desc + " " + duo + " di " + SITE.venue_name) +
+    "&location=" + encodeURIComponent(SITE.venue_name);
+  const cal = $("#calBtn"); if (cal) cal.href = calUrl;
+  const cal2 = $("#calBtn2"); if (cal2) cal2.href = calUrl;
   const ga = $("#groomAva"); if (ga) ga.src = SITE.groom_photo;
   const ba = $("#brideAva"); if (ba) ba.src = SITE.bride_photo;
   const gn = $("#groomName"); if (gn) gn.childNodes[0].textContent = (SITE.groom_name || SITE.groom_short) + " ";
@@ -505,19 +574,26 @@ function applySite() {
   setText("#wCollab", SITE.wrapped_collab);
   setText("#lyricsText", '"' + SITE.lyrics_text + '"');
   setText("#lyricsSrc", SITE.lyrics_source);
+  const galUrls = String(SITE.gallery_urls || "").split("\n").map((u) => u.trim()).filter(Boolean);
+  const galDurs = ["3:21", "2:47", "4:05", "2:58", "3:33", "5:01"];
   const gal = $("#gallery");
-  if (gal) {
-    const urls = String(SITE.gallery_urls || "").split("\n").map((u) => u.trim()).filter(Boolean);
-    if (urls.length) {
-      const durs = ["3:21", "2:47", "4:05", "2:58", "3:33", "5:01"];
-      gal.innerHTML = urls.map((u, i) =>
-        '<a class="up-item" href="' + esc(u) + '" target="_blank" rel="noopener">' +
-        '<span class="up-thumb"><img src="' + esc(u) + '" alt="Momen Spesial ' + (i + 1) + '" loading="lazy">' +
-        '<span class="up-dur">' + durs[i % durs.length] + "</span></span>" +
-        '<span class="up-meta"><span class="up-title">Momen Spesial ' + (i + 1) + "</span>" +
-        '<span class="up-sub">' + esc(duo) + " • " + year + "</span></span></a>"
-      ).join("");
-    }
+  if (gal && galUrls.length) {
+    gal.innerHTML = galUrls.map((u, i) =>
+      '<a class="up-item" href="' + esc(u) + '" target="_blank" rel="noopener">' +
+      '<span class="up-thumb"><img src="' + esc(u) + '" alt="Momen Spesial ' + (i + 1) + '" loading="lazy">' +
+      '<span class="up-dur">' + galDurs[i % galDurs.length] + "</span></span>" +
+      '<span class="up-meta"><span class="up-title">Momen Spesial ' + (i + 1) + "</span>" +
+      '<span class="up-sub">' + esc(duo) + " • " + year + "</span></span></a>"
+    ).join("");
+  }
+  const shorts = $("#shortsRow");
+  if (shorts && galUrls.length) {
+    shorts.innerHTML = galUrls.map((u, i) =>
+      '<a class="short-item" href="' + esc(u) + '" target="_blank" rel="noopener">' +
+      '<img src="' + esc(u) + '" alt="Momen ' + (i + 1) + '" loading="lazy">' +
+      '<span class="short-dur">' + galDurs[i % galDurs.length] + "</span>" +
+      '<span class="short-cap">Momen ' + (i + 1) + "</span></a>"
+    ).join("");
   }
   setText("#gift1Name", SITE.gift1_bank);
   setText("#gift1Num", maskNumber(SITE.gift1_number));

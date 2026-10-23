@@ -3,31 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NikahTube — Undangan Digital ala YouTube | Jual Beli Undangan? Di Sini Gratis & Open Source</title>
-<meta name="description" content="NikahTube adalah template undangan pernikahan digital dengan tampilan ala platform video. Buat kamu yang lagi cari tempat jual undangan digital atau mau beli template undangan online: NikahTube gratis dan open source. Fitur thumbnail video ala premiere, countdown save the date, chapter acara, komentar, subscribe channel, love gift, dan galeri Up Next.">
-<meta name="keywords" content="jual undangan digital, beli undangan digital, jual beli undangan online, template undangan youtube, undangan digital gratis, undangan pernikahan online, nikahtube, template undangan open source">
+<title>NikahTube — YouTube-Style Digital Wedding Invitation | Free & Open Source Template</title>
+<meta name="description" content="NikahTube is a digital wedding invitation template styled like a video platform watch page. Looking to buy a wedding invitation template or a place that sells digital invitations? NikahTube is free and open source: premiere thumbnail, save-the-date countdown, event chapters, comments guestbook, channel subscribe, love gift, and an Up Next gallery.">
+<meta name="keywords" content="buy wedding invitation template, youtube wedding invitation, free wedding invitation template, digital wedding invitation, jual undangan digital, beli undangan digital, jual beli undangan online, template undangan youtube, nikahtube, open source wedding invitation">
 <meta name="author" content="Usra">
 <meta name="robots" content="index, follow">
 <meta name="theme-color" content="#0f0f0f">
 <link rel="canonical" href="https://nikahtube.xsrazy.web.id/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="NikahTube">
-<meta property="og:title" content="NikahTube — Undangan Digital ala YouTube | Jual Beli Undangan? Di Sini Gratis & Open Source">
-<meta property="og:description" content="Template undangan pernikahan digital rasa platform video: thumbnail premiere, countdown, chapter acara, komentar, subscribe, love gift. Gratis & open source, nggak perlu beli.">
+<meta property="og:title" content="NikahTube — YouTube-Style Digital Wedding Invitation | Free & Open Source Template">
+<meta property="og:description" content="A digital wedding invitation that looks like a video watch page: premiere thumbnail, countdown, event chapters, comments, channel subscribe, love gift. Free and open source.">
 <meta property="og:url" content="https://nikahtube.xsrazy.web.id/">
 <meta property="og:image" content="https://nikahtube.xsrazy.web.id/assets/images/og-image.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="NikahTube — Usra & Zee: The Wedding Premiere, undangan digital ala YouTube">
+<meta property="og:image:alt" content="NikahTube — Usra & Zee: The Wedding Premiere, a YouTube-style digital wedding invitation">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="NikahTube — Undangan Digital ala YouTube">
-<meta name="twitter:description" content="Undangan pernikahan digital rasa platform video. Gratis & open source: thumbnail premiere, countdown, chapter acara, komentar, subscribe, love gift.">
+<meta name="twitter:title" content="NikahTube — YouTube-Style Digital Wedding Invitation">
+<meta name="twitter:description" content="A digital wedding invitation styled like a video platform. Free and open source: premiere thumbnail, countdown, event chapters, comments, subscribe, love gift.">
 <meta name="twitter:image" content="https://nikahtube.xsrazy.web.id/assets/images/og-image.jpg">
 <link rel="icon" href="/assets/images/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" href="/assets/images/icon-192x192.png" sizes="192x192">
 <link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebSite","name":"NikahTube","url":"https://nikahtube.xsrazy.web.id/","description":"Template undangan pernikahan digital ala YouTube. Gratis dan open source.","inLanguage":"id"}
+{"@context":"https://schema.org","@type":"WebSite","name":"NikahTube","url":"https://nikahtube.xsrazy.web.id/","description":"YouTube-style digital wedding invitation template. Free and open source.","inLanguage":"id"}
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -63,8 +63,30 @@
     <div class="top-guest" id="topGuest"></div>
   </header>
 
+  <!-- CHANNEL HEADER -->
+  <div class="channel-header">
+    <div class="channel-banner"><img data-album-art src="/assets/images/thumbnail.webp" alt="Banner channel Usra & Zee"></div>
+    <div class="channel-bar">
+      <div class="channel-row">
+        <img id="channelAva" data-album-art src="/assets/images/thumbnail.webp" alt="Channel Usra & Zee">
+        <div class="channel-main">
+          <div class="channel-name"><span id="channelNameText">Usra &amp; Zee</span><svg class="verified-check" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-1.2 14.6-4-4 1.6-1.6 2.4 2.4 5.2-5.2 1.6 1.6-6.8 6.8z"/></svg></div>
+          <div class="channel-sub" id="subCount">0 subscriber</div>
+        </div>
+        <button id="subBtn" class="sub-btn" type="button">Subscribe</button>
+      </div>
+    </div>
+    <nav class="channel-tabs">
+      <div class="tabs-inner">
+        <button class="ctab active" type="button" data-target=".stage">Beranda</button>
+        <button class="ctab" type="button" data-target=".watch-aside">Video</button>
+        <button class="ctab" type="button" data-target=".desc-card">Playlist</button>
+        <button class="ctab" type="button" data-target=".comments-card">Komunitas</button>
+      </div>
+    </nav>
+  </div>
+
   <div class="watch">
-    <main class="watch-main">
 
       <!-- VIDEO STAGE -->
       <section class="stage">
@@ -78,7 +100,6 @@
               <div class="stage-title" id="playerTitle">River Flows in You</div>
               <div class="stage-artist" id="playerArtist">Usra &amp; Zee</div>
             </div>
-            <button id="likeBtn" class="like-btn" type="button" aria-label="Suka">♡</button>
           </div>
         </div>
       </section>
@@ -99,30 +120,30 @@
         </div>
       </section>
 
-      <!-- TITLE + CHANNEL + SHARE -->
+      <!-- TITLE + ACTIONS -->
       <section class="title-block">
         <h1 id="videoTitle">USRA &amp; ZEE: The Wedding Premiere</h1>
         <div class="video-meta"><span id="npMetaText">100% match • 2050 • Single • Untuk: </span><span id="npGuest">kamu</span></div>
-        <div class="channel-row">
-          <img id="channelAva" data-album-art src="/assets/images/thumbnail.webp" alt="Channel Usra & Zee">
-          <div class="channel-main">
-            <div class="channel-name"><span id="channelNameText">Usra &amp; Zee</span><svg class="verified-check" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-1.2 14.6-4-4 1.6-1.6 2.4 2.4 5.2-5.2 1.6 1.6-6.8 6.8z"/></svg></div>
-            <div class="channel-sub" id="subCount">0 subscriber</div>
-          </div>
-          <button id="subBtn" class="sub-btn" type="button">Subscribe</button>
-        </div>
-        <div class="btn-row wrap share-row">
-          <a class="btn btn-chip" id="shareWa" href="#" target="_blank" rel="noopener">WhatsApp</a>
-          <a class="btn btn-chip" id="shareTg" href="#" target="_blank" rel="noopener">Telegram</a>
-          <a class="btn btn-chip" id="shareFb" href="#" target="_blank" rel="noopener">Facebook</a>
-          <a class="btn btn-chip" id="shareX" href="#" target="_blank" rel="noopener">X</a>
-          <button class="btn btn-chip salin-btn" type="button" data-copy-link="1">Salin Link</button>
+        <div class="actions-row">
+          <button id="likeBtn" class="chip-btn like-chip" type="button" aria-label="Suka"><svg class="chip-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M1 21h4V9H1v12zm20-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L12.17 1 5.59 7.59C5.22 7.95 5 8.45 5 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg><span>Suka</span></button>
+          <span class="chip-static">Bagikan</span>
+          <a class="chip-btn" id="shareWa" href="#" target="_blank" rel="noopener">WhatsApp</a>
+          <a class="chip-btn" id="shareTg" href="#" target="_blank" rel="noopener">Telegram</a>
+          <a class="chip-btn" id="shareFb" href="#" target="_blank" rel="noopener">Facebook</a>
+          <a class="chip-btn" id="shareX" href="#" target="_blank" rel="noopener">X</a>
+          <a class="chip-btn" id="calBtn2" href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Akad+Nikah+Usra+%26+Zee&dates=20500117T030000Z/20500117T040000Z&details=Akad+nikah+Usra+%26+Zee+di+Jam+Gadang,+Bukittinggi&location=Jam+Gadang,+Bukittinggi" target="_blank" rel="noopener">Simpan Tanggal</a>
+          <button class="chip-btn salin-btn" type="button" data-copy-link="1">Salin Link</button>
         </div>
       </section>
 
       <!-- DESCRIPTION -->
-      <section class="card desc-card">
+      <section class="card desc-card desc-collapsed">
         <div class="card-label">DESKRIPSI</div>
+        <p class="desc-summary">
+          <span class="desc-sum-main">Senin, 17 Januari 2050 • Jam Gadang</span><br>
+          <span class="desc-sum-sub">Akad Nikah 10.00 WIB • Resepsi 13.00 WIB</span>
+        </p>
+        <div class="desc-body">
         <div class="track">
           <div class="track-num">1</div>
           <div class="track-main">
@@ -172,10 +193,25 @@
           <div class="wstat"><div class="w-num">∞</div><div class="w-lab">Menit ditonton: seumur hidup</div></div>
           <div class="wstat"><div class="w-num" id="wCollab">Usra × Zee</div><div class="w-lab">Kolaborasi terbaik sepanjang masa</div></div>
         </div>
+        </div>
+        <button class="desc-toggle" id="descToggle" type="button" aria-expanded="false">...selengkapnya</button>
+      </section>
+
+      <!-- SHORTS -->
+      <section class="shorts-sec">
+        <div class="shorts-head"><span class="brand-mark">▶</span><h3>Shorts</h3></div>
+        <div class="shorts-row" id="shortsRow">
+          <a class="short-item" href="https://picsum.photos/seed/nikahtube1/800/450" target="_blank" rel="noopener"><img src="https://picsum.photos/seed/nikahtube1/800/450" alt="Momen 1" loading="lazy"><span class="short-dur">3:21</span><span class="short-cap">Momen 1</span></a>
+          <a class="short-item" href="https://picsum.photos/seed/nikahtube2/800/450" target="_blank" rel="noopener"><img src="https://picsum.photos/seed/nikahtube2/800/450" alt="Momen 2" loading="lazy"><span class="short-dur">2:47</span><span class="short-cap">Momen 2</span></a>
+          <a class="short-item" href="https://picsum.photos/seed/nikahtube3/800/450" target="_blank" rel="noopener"><img src="https://picsum.photos/seed/nikahtube3/800/450" alt="Momen 3" loading="lazy"><span class="short-dur">4:05</span><span class="short-cap">Momen 3</span></a>
+          <a class="short-item" href="https://picsum.photos/seed/nikahtube4/800/450" target="_blank" rel="noopener"><img src="https://picsum.photos/seed/nikahtube4/800/450" alt="Momen 4" loading="lazy"><span class="short-dur">2:58</span><span class="short-cap">Momen 4</span></a>
+          <a class="short-item" href="https://picsum.photos/seed/nikahtube5/800/450" target="_blank" rel="noopener"><img src="https://picsum.photos/seed/nikahtube5/800/450" alt="Momen 5" loading="lazy"><span class="short-dur">3:33</span><span class="short-cap">Momen 5</span></a>
+          <a class="short-item" href="https://picsum.photos/seed/nikahtube6/800/450" target="_blank" rel="noopener"><img src="https://picsum.photos/seed/nikahtube6/800/450" alt="Momen 6" loading="lazy"><span class="short-dur">5:01</span><span class="short-cap">Momen 6</span></a>
+        </div>
       </section>
 
       <!-- ARTISTS / CHANNELS -->
-      <section class="card">
+      <section class="card artists-card">
         <div class="section-head"><h3>Tentang Channel</h3><span class="section-sub">duo paling ditunggu 2050</span></div>
         <div class="artist">
           <img class="artist-ava" id="groomAva" src="/assets/images/cowo.webp" alt="Usra">
@@ -198,12 +234,15 @@
       </section>
 
       <!-- COMMENTS / RSVP -->
-      <section class="card">
+      <section class="card comments-card">
         <div class="section-head"><h3>Komentar</h3><span class="section-sub">RSVP &amp; ucapan buat mempelai</span></div>
         <form id="wishForm">
-          <label class="f-lab">Nama
-            <input class="f-in" id="wishName" type="text" placeholder="Nama kamu" required maxlength="60">
-          </label>
+          <div class="composer-row">
+            <span class="composer-ava" aria-hidden="true">T</span>
+            <label class="f-lab composer-lab">Nama
+              <input class="f-in" id="wishName" type="text" placeholder="Nama kamu" required maxlength="60">
+            </label>
+          </div>
           <label class="f-lab">Konfirmasi Kehadiran
             <select class="f-in" id="wishPresence">
               <option value="Datang">Datang, insya Allah</option>
@@ -216,11 +255,13 @@
           </label>
           <button class="btn btn-green btn-block" type="submit">Kirim Komentar</button>
         </form>
+        <div class="wish-filters">
+          <button class="filter-chip active" id="chipAll" type="button">Semua</button>
+          <button class="filter-chip" id="chipNew" type="button">Terbaru</button>
+        </div>
         <div class="wish-list" id="wishList"></div>
         <div class="wish-empty" id="wishEmpty">Belum ada komentar. Jadi yang pertama komentar di video ini.</div>
       </section>
-    </main>
-
     <!-- UP NEXT -->
     <aside class="watch-aside">
       <div class="aside-head">Up Next</div>

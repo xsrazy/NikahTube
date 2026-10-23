@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NikahTube — Undangan Digital ala YouTube | Jual Beli Undangan? Di Sini Gratis & Open Source</title>
+<meta name="description" content="NikahTube adalah template undangan pernikahan digital dengan tampilan ala platform video. Buat kamu yang lagi cari tempat jual undangan digital atau mau beli template undangan online: NikahTube gratis dan open source. Fitur thumbnail video ala premiere, countdown save the date, chapter acara, komentar, subscribe channel, love gift, dan galeri Up Next.">
+<meta name="keywords" content="jual undangan digital, beli undangan digital, jual beli undangan online, template undangan youtube, undangan digital gratis, undangan pernikahan online, nikahtube, template undangan open source">
+<meta name="author" content="Usra">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#0f0f0f">
+<link rel="canonical" href="https://nikahtube.xsrazy.web.id/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="NikahTube">
+<meta property="og:title" content="NikahTube — Undangan Digital ala YouTube | Jual Beli Undangan? Di Sini Gratis & Open Source">
+<meta property="og:description" content="Template undangan pernikahan digital rasa platform video: thumbnail premiere, countdown, chapter acara, komentar, subscribe, love gift. Gratis & open source, nggak perlu beli.">
+<meta property="og:url" content="https://nikahtube.xsrazy.web.id/">
+<meta property="og:image" content="https://nikahtube.xsrazy.web.id/assets/images/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="NikahTube — Usra & Zee: The Wedding Premiere, undangan digital ala YouTube">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="NikahTube — Undangan Digital ala YouTube">
+<meta name="twitter:description" content="Undangan pernikahan digital rasa platform video. Gratis & open source: thumbnail premiere, countdown, chapter acara, komentar, subscribe, love gift.">
+<meta name="twitter:image" content="https://nikahtube.xsrazy.web.id/assets/images/og-image.jpg">
+<link rel="icon" href="/assets/images/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/assets/images/icon-192x192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebSite","name":"NikahTube","url":"https://nikahtube.xsrazy.web.id/","description":"Template undangan pernikahan digital ala YouTube. Gratis dan open source.","inLanguage":"id"}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+<!-- ============ COVER / PREMIERE GATE ============ -->
+<div id="cover">
+  <div class="cover-inner">
+    <div class="cover-brand"><span class="brand-mark">▶</span><span class="brand-word">NIKAH</span><span class="brand-tube">TUBE</span></div>
+    <div class="cover-thumb-wrap">
+      <img class="cover-thumb" data-album-art src="/assets/images/thumbnail.webp" alt="Usra & Zee: The Wedding Premiere">
+      <span class="premiere-badge">PREMIERE</span>
+    </div>
+    <div class="cover-label" id="coverLabel">NIKAH TUBE ORIGINAL • PREMIERE 2050</div>
+    <h1 class="cover-title" id="coverTitle">USRA &amp; ZEE:<br>The Wedding Premiere</h1>
+    <div class="cover-artist" id="coverArtist">Album • Usra &amp; Zee</div>
+    <div class="cover-guest" id="coverGuest" hidden>
+      <div class="cg-label">Undangan untuk</div>
+      <div class="cg-name" id="guestName">Tamu Undangan</div>
+    </div>
+    <button id="openBtn" class="play-big" type="button">▶ Putar Undangan</button>
+    <div class="cover-meta" id="coverMeta">100% match • Premiere • 1 hari spesial</div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app" hidden>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">▶</span><span class="brand-word">NIKAH</span><span class="brand-tube">TUBE</span></div>
+    <div class="top-guest" id="topGuest"></div>
+  </header>
+
+  <div class="watch">
+    <main class="watch-main">
+
+      <!-- VIDEO STAGE -->
+      <section class="stage">
+        <img class="stage-img" data-album-art src="/assets/images/thumbnail.webp" alt="Thumbnail video Usra & Zee">
+        <div class="stage-controls">
+          <div class="player-progress"><div class="player-bar" id="playerBar"></div></div>
+          <div class="stage-row">
+            <button id="playBtn" class="stage-play" type="button" aria-label="Putar atau jeda">▶</button>
+            <span class="player-time"><span id="curTime">0:00</span>/<span id="durTime">0:00</span></span>
+            <div class="stage-meta">
+              <div class="stage-title" id="playerTitle">River Flows in You</div>
+              <div class="stage-artist" id="playerArtist">Usra &amp; Zee</div>
+            </div>
+            <button id="likeBtn" class="like-btn" type="button" aria-label="Suka">♡</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- PREMIERE COUNTDOWN -->
+      <section class="card countdown-card">
+        <div class="card-label">PREMIERE • COUNTDOWN MENUJU HARI H</div>
+        <div class="countdown">
+          <div class="cd-cell"><div class="cd-num" id="cdDays">0</div><div class="cd-lab">Hari</div></div>
+          <div class="cd-cell"><div class="cd-num" id="cdHours">0</div><div class="cd-lab">Jam</div></div>
+          <div class="cd-cell"><div class="cd-num" id="cdMins">0</div><div class="cd-lab">Menit</div></div>
+          <div class="cd-cell"><div class="cd-num" id="cdSecs">0</div><div class="cd-lab">Detik</div></div>
+        </div>
+        <div class="cd-date" id="cdDate">Senin, 17 Januari 2050 • Jam Gadang, Bukittinggi</div>
+        <div class="btn-row">
+          <a class="btn btn-red" id="calBtn" href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Akad+Nikah+Usra+%26+Zee&dates=20500117T030000Z/20500117T040000Z&details=Akad+nikah+Usra+%26+Zee+di+Jam+Gadang,+Bukittinggi&location=Jam+Gadang,+Bukittinggi" target="_blank" rel="noopener">Ingatkan Saya: Save the Date</a>
+          <a class="btn btn-chip" id="mapsBtn" href="https://www.google.com/maps/search/?api=1&query=Jam+Gadang+Bukittinggi" target="_blank" rel="noopener">Lihat Google Maps</a>
+        </div>
+      </section>
+
+      <!-- TITLE + CHANNEL + SHARE -->
+      <section class="title-block">
+        <h1 id="videoTitle">USRA &amp; ZEE: The Wedding Premiere</h1>
+        <div class="video-meta"><span id="npMetaText">100% match • 2050 • Single • Untuk: </span><span id="npGuest">kamu</span></div>
+        <div class="channel-row">
+          <img id="channelAva" data-album-art src="/assets/images/thumbnail.webp" alt="Channel Usra & Zee">
+          <div class="channel-main">
+            <div class="channel-name"><span id="channelNameText">Usra &amp; Zee</span><svg class="verified-check" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-1.2 14.6-4-4 1.6-1.6 2.4 2.4 5.2-5.2 1.6 1.6-6.8 6.8z"/></svg></div>
+            <div class="channel-sub" id="subCount">0 subscriber</div>
+          </div>
+          <button id="subBtn" class="sub-btn" type="button">Subscribe</button>
+        </div>
+        <div class="btn-row wrap share-row">
+          <a class="btn btn-chip" id="shareWa" href="#" target="_blank" rel="noopener">WhatsApp</a>
+          <a class="btn btn-chip" id="shareTg" href="#" target="_blank" rel="noopener">Telegram</a>
+          <a class="btn btn-chip" id="shareFb" href="#" target="_blank" rel="noopener">Facebook</a>
+          <a class="btn btn-chip" id="shareX" href="#" target="_blank" rel="noopener">X</a>
+          <button class="btn btn-chip salin-btn" type="button" data-copy-link="1">Salin Link</button>
+        </div>
+      </section>
+
+      <!-- DESCRIPTION -->
+      <section class="card desc-card">
+        <div class="card-label">DESKRIPSI</div>
+        <div class="track">
+          <div class="track-num">1</div>
+          <div class="track-main">
+            <div class="track-title" id="track1Title">Akad Nikah</div>
+            <div class="track-meta" id="track1Meta">Senin, 17 Januari 2050 • 10.00 WIB • Jam Gadang</div>
+          </div>
+          <div class="track-dur" id="track1Dur">10:00</div>
+        </div>
+        <div class="track">
+          <div class="track-num">2</div>
+          <div class="track-main">
+            <div class="track-title" id="track2Title">Resepsi</div>
+            <div class="track-meta" id="track2Meta">Senin, 17 Januari 2050 • 13.00 WIB • Jam Gadang</div>
+          </div>
+          <div class="track-dur" id="track2Dur">13:00</div>
+        </div>
+        <div class="venue">
+          <div class="venue-name" id="venueName">Jam Gadang</div>
+          <div class="venue-addr" id="venueAddr">Jl. Raya Bukittinggi - Payakumbuh, Benteng Pasar Atas, Bukittinggi, Sumatera Barat</div>
+          <div class="chip-row">
+            <span class="chip" id="chip1">Dress code: Batik</span>
+            <span class="chip" id="chip2">Dominasi warna hitam</span>
+          </div>
+        </div>
+        <div class="desc-music">Musik latar: <span id="npTitle">River Flows in You</span> • <span id="npArtist">Usra &amp; Zee</span></div>
+        <div class="lyrics-block">
+          <p class="lyrics-text" id="lyricsText">"Dan di antara tanda-tanda (kebesaran)-Nya ialah Dia menciptakan pasangan-pasangan untukmu dari jenismu sendiri, supaya kamu cenderung dan merasa tenteram kepadanya, dan dijadikan-Nya di antaramu rasa kasih dan sayang."</p>
+          <div class="lyrics-src" id="lyricsSrc">QS. Ar-Rum ayat 21</div>
+        </div>
+        <div class="gift">
+          <div class="gift-name" id="gift1Name">SeaBank</div>
+          <div class="gift-num" id="gift1Num">•••• •••• •••• 4848</div>
+          <div class="gift-owner" id="gift1Owner">a.n. Rahmatul Usra</div>
+          <button class="btn btn-chip salin-btn" id="gift1Btn" type="button" data-copy="123456784848">Salin Nomor</button>
+        </div>
+        <div class="gift">
+          <div class="gift-name" id="gift2Name">DANA</div>
+          <div class="gift-num" id="gift2Num">•••• •••• 1748</div>
+          <div class="gift-owner" id="gift2Owner">a.n. Rahmatul Usra</div>
+          <button class="btn btn-chip salin-btn" id="gift2Btn" type="button" data-copy="081234561748">Salin Nomor</button>
+        </div>
+        <div class="wrapped-grid">
+          <div class="wstat wstat-red"><div class="w-num" id="wMatch">100%</div><div class="w-lab">Match sejak pemutaran pertama</div></div>
+          <div class="wstat"><div class="w-num" id="wDays">0</div><div class="w-lab">Hari menuju premiere</div></div>
+          <div class="wstat"><div class="w-num">2</div><div class="w-lab">Chapter spesial</div></div>
+          <div class="wstat"><div class="w-num" id="wGenre">Takdir</div><div class="w-lab">Genre teratas tahun ini</div></div>
+          <div class="wstat"><div class="w-num">∞</div><div class="w-lab">Menit ditonton: seumur hidup</div></div>
+          <div class="wstat"><div class="w-num" id="wCollab">Usra × Zee</div><div class="w-lab">Kolaborasi terbaik sepanjang masa</div></div>
+        </div>
+      </section>
+
+      <!-- ARTISTS / CHANNELS -->
+      <section class="card">
+        <div class="section-head"><h3>Tentang Channel</h3><span class="section-sub">duo paling ditunggu 2050</span></div>
+        <div class="artist">
+          <img class="artist-ava" id="groomAva" src="/assets/images/cowo.webp" alt="Usra">
+          <div class="artist-main">
+            <div class="artist-name" id="groomName">Rahmatul Usra <span class="verified"><svg class="verified-badge" viewBox="0 0 24 24" aria-hidden="true"><path d="M23.00 12.00 L21.32 13.23 L22.63 14.85 L20.68 15.60 L21.53 17.50 L19.46 17.72 L19.78 19.78 L17.72 19.46 L17.50 21.53 L15.60 20.68 L14.85 22.63 L13.23 21.32 L12.00 23.00 L10.77 21.32 L9.15 22.63 L8.40 20.68 L6.50 21.53 L6.28 19.46 L4.22 19.78 L4.54 17.72 L2.47 17.50 L3.32 15.60 L1.37 14.85 L2.68 13.23 L1.00 12.00 L2.68 10.77 L1.37 9.15 L3.32 8.40 L2.47 6.50 L4.54 6.28 L4.22 4.22 L6.28 4.54 L6.50 2.47 L8.40 3.32 L9.15 1.37 L10.77 2.68 L12.00 1.00 L13.23 2.68 L14.85 1.37 L15.60 3.32 L17.50 2.47 L17.72 4.54 L19.78 4.22 L19.46 6.28 L21.53 6.50 L20.68 8.40 L22.63 9.15 L21.32 10.77 Z" fill="#ffffff"/><path d="M8.1 12.5l2.5 2.5 5.3-5.9" fill="none" stroke="#0f0f0f" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>Verified Channel</span></div>
+            <div class="artist-sub" id="groomSub">Putra dari Bapak ... &amp; Ibu ... • 1.205 pendengar bulanan</div>
+            <div class="artist-fans" id="fansGroom"></div>
+          </div>
+          <button class="follow-btn" type="button" data-artist="groom">Follow</button>
+        </div>
+        <div class="artist">
+          <img class="artist-ava" id="brideAva" src="/assets/images/cewe.webp" alt="Zee">
+          <div class="artist-main">
+            <div class="artist-name" id="brideName">Azizi Asadel <span class="verified"><svg class="verified-badge" viewBox="0 0 24 24" aria-hidden="true"><path d="M23.00 12.00 L21.32 13.23 L22.63 14.85 L20.68 15.60 L21.53 17.50 L19.46 17.72 L19.78 19.78 L17.72 19.46 L17.50 21.53 L15.60 20.68 L14.85 22.63 L13.23 21.32 L12.00 23.00 L10.77 21.32 L9.15 22.63 L8.40 20.68 L6.50 21.53 L6.28 19.46 L4.22 19.78 L4.54 17.72 L2.47 17.50 L3.32 15.60 L1.37 14.85 L2.68 13.23 L1.00 12.00 L2.68 10.77 L1.37 9.15 L3.32 8.40 L2.47 6.50 L4.54 6.28 L4.22 4.22 L6.28 4.54 L6.50 2.47 L8.40 3.32 L9.15 1.37 L10.77 2.68 L12.00 1.00 L13.23 2.68 L14.85 1.37 L15.60 3.32 L17.50 2.47 L17.72 4.54 L19.78 4.22 L19.46 6.28 L21.53 6.50 L20.68 8.40 L22.63 9.15 L21.32 10.77 Z" fill="#ffffff"/><path d="M8.1 12.5l2.5 2.5 5.3-5.9" fill="none" stroke="#0f0f0f" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>Verified Channel</span></div>
+            <div class="artist-sub" id="brideSub">Putri dari Bapak ... &amp; Ibu ... • 1.748 pendengar bulanan</div>
+            <div class="artist-fans" id="fansBride"></div>
+          </div>
+          <button class="follow-btn" type="button" data-artist="bride">Follow</button>
+        </div>
+      </section>
+
+      <!-- COMMENTS / RSVP -->
+      <section class="card">
+        <div class="section-head"><h3>Komentar</h3><span class="section-sub">RSVP &amp; ucapan buat mempelai</span></div>
+        <form id="wishForm">
+          <label class="f-lab">Nama
+            <input class="f-in" id="wishName" type="text" placeholder="Nama kamu" required maxlength="60">
+          </label>
+          <label class="f-lab">Konfirmasi Kehadiran
+            <select class="f-in" id="wishPresence">
+              <option value="Datang">Datang, insya Allah</option>
+              <option value="Berhalangan">Berhalangan</option>
+              <option value="Masih Ragu">Masih ragu</option>
+            </select>
+          </label>
+          <label class="f-lab">Komentar &amp; Doa
+            <textarea class="f-in" id="wishMsg" rows="3" placeholder="Tulis komentar buat Usra & Zee..." required maxlength="500"></textarea>
+          </label>
+          <button class="btn btn-green btn-block" type="submit">Kirim Komentar</button>
+        </form>
+        <div class="wish-list" id="wishList"></div>
+        <div class="wish-empty" id="wishEmpty">Belum ada komentar. Jadi yang pertama komentar di video ini.</div>
+      </section>
+    </main>
+
+    <!-- UP NEXT -->
+    <aside class="watch-aside">
+      <div class="aside-head">Up Next</div>
+      <div class="up-next" id="gallery">
+        <a class="up-item" href="https://picsum.photos/seed/nikahtube1/800/450" target="_blank" rel="noopener"><span class="up-thumb"><img src="https://picsum.photos/seed/nikahtube1/800/450" alt="Momen Spesial 1" loading="lazy"><span class="up-dur">3:21</span></span><span class="up-meta"><span class="up-title">Momen Spesial 1</span><span class="up-sub">Usra &amp; Zee • 2050</span></span></a>
+        <a class="up-item" href="https://picsum.photos/seed/nikahtube2/800/450" target="_blank" rel="noopener"><span class="up-thumb"><img src="https://picsum.photos/seed/nikahtube2/800/450" alt="Momen Spesial 2" loading="lazy"><span class="up-dur">2:47</span></span><span class="up-meta"><span class="up-title">Momen Spesial 2</span><span class="up-sub">Usra &amp; Zee • 2050</span></span></a>
+        <a class="up-item" href="https://picsum.photos/seed/nikahtube3/800/450" target="_blank" rel="noopener"><span class="up-thumb"><img src="https://picsum.photos/seed/nikahtube3/800/450" alt="Momen Spesial 3" loading="lazy"><span class="up-dur">4:05</span></span><span class="up-meta"><span class="up-title">Momen Spesial 3</span><span class="up-sub">Usra &amp; Zee • 2050</span></span></a>
+        <a class="up-item" href="https://picsum.photos/seed/nikahtube4/800/450" target="_blank" rel="noopener"><span class="up-thumb"><img src="https://picsum.photos/seed/nikahtube4/800/450" alt="Momen Spesial 4" loading="lazy"><span class="up-dur">2:58</span></span><span class="up-meta"><span class="up-title">Momen Spesial 4</span><span class="up-sub">Usra &amp; Zee • 2050</span></span></a>
+        <a class="up-item" href="https://picsum.photos/seed/nikahtube5/800/450" target="_blank" rel="noopener"><span class="up-thumb"><img src="https://picsum.photos/seed/nikahtube5/800/450" alt="Momen Spesial 5" loading="lazy"><span class="up-dur">3:33</span></span><span class="up-meta"><span class="up-title">Momen Spesial 5</span><span class="up-sub">Usra &amp; Zee • 2050</span></span></a>
+        <a class="up-item" href="https://picsum.photos/seed/nikahtube6/800/450" target="_blank" rel="noopener"><span class="up-thumb"><img src="https://picsum.photos/seed/nikahtube6/800/450" alt="Momen Spesial 6" loading="lazy"><span class="up-dur">5:01</span></span><span class="up-meta"><span class="up-title">Momen Spesial 6</span><span class="up-sub">Usra &amp; Zee • 2050</span></span></a>
+      </div>
+    </aside>
+  </div>
+
+  <footer class="footer">
+    <div class="brand small"><span class="brand-mark">▶</span><span class="brand-word">NIKAH</span><span class="brand-tube">TUBE</span></div>
+    <p>Template undangan digital open source (lisensi MIT). Terinspirasi dari tampilan platform video; bukan afiliasi YouTube.<br>
+    Build with ❤ Usra • <a href="https://github.com/xsrazy/NikahTube" target="_blank" rel="noopener">github.com/xsrazy/NikahTube</a></p>
+  </footer>
+</div>
+
+<audio id="audio" src="/assets/music/sound.mp3" loop preload="auto"></audio>
+<script src="/js/app.js"></script>
+</body>
+</html>

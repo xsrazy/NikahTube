@@ -1,0 +1,1 @@
+{"cleanUrls":true,"redirects":[{"destination":"https://nikahtube.xsrazy.web.id/","has":[{"type":"host","value":"(.*)\\.vercel\\.app"}],"permanent":true,"source":"/"},{"destination":"https://nikahtube.xsrazy.web.id/:path*","has":[{"type":"host","value":"(.*)\\.vercel\\.app"}],"permanent":true,"source":"/:path*"}]}

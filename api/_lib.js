@@ -475,6 +475,7 @@ const toPublic = (comment, byParent, isAdmin) => {
         presence: comment.presence,
         comment: comment.comment,
         is_admin: comment.is_admin,
+        pinned: comment.pinned === true,
         created_at: formatDate(comment.created_at),
         comments: replies,
         like: { love: (comment.likes || []).length },

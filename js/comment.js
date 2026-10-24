@@ -2,7 +2,6 @@ import { dto } from './dto.js';
 import { card } from './card.js';
 import { like } from './like.js';
 import { util } from './util.js';
-import { theme } from './theme.js';
 import { session } from './session.js';
 import { storage } from './storage.js';
 import { pagination } from './pagination.js';
@@ -14,6 +13,10 @@ export const comment = (() => {
     let user = null;
     let tracker = null;
     let showHide = null;
+
+    // Root comment ids in the order the API returned them (newest
+    // first). setSort reorders the DOM from this list without refetching.
+    let currentOrder = [];
 
     const changeButton = (id, disabled) => document.querySelector(`[data-button-action="${id}"]`).childNodes.forEach((e) => e.disabled = disabled);
 
@@ -54,7 +57,48 @@ export const comment = (() => {
         });
 
         owns.unset(id);
+        currentOrder = currentOrder.filter((u) => u !== id);
         document.getElementById(id).remove();
+    };
+
+    const pin = async (button) => {
+        const id = button.getAttribute('data-uuid');
+        const currentlyPinned = button.getAttribute('data-pinned') === 'true';
+
+        const btn = util.disableButton(button);
+        try {
+            const res = await request(HTTP_PUT, '/api/comment/' + id)
+                .token(session.getToken())
+                .body({ pinned: !currentlyPinned })
+                .send(dto.statusResponse);
+            if (res.data.status) {
+                comment();
+            } else {
+                alert('Gagal mengubah sematan. Coba lagi.');
+            }
+        } catch {
+            // request.js already alerted the real reason (e.g. a 400/403).
+        } finally {
+            btn.restore();
+        }
+    };
+
+    const setSort = (btn, mode) => {
+        document.querySelectorAll('[data-sort]').forEach((c) => {
+            c.classList.toggle('active', c === btn);
+        });
+
+        const list = document.getElementById('comments');
+        if (!list) {
+            return;
+        }
+        const order = mode === 'old' ? [...currentOrder].reverse() : currentOrder;
+        for (const uuid of order) {
+            const el = document.getElementById(uuid);
+            if (el) {
+                list.appendChild(el);
+            }
+        }
     };
 
     const update = async (button) => {
@@ -72,7 +116,7 @@ export const comment = (() => {
         let isChecklist = false;
         const badge = document.getElementById(`badge-${id}`);
         if (badge) {
-            isChecklist = badge.classList.contains('text-success');
+            isChecklist = badge.classList.contains('badge-present');
         }
 
         if (id && util.base64Encode(form.value) === form.getAttribute('data-original') && isChecklist === isPresent) {
@@ -134,7 +178,10 @@ export const comment = (() => {
         }
 
         if (presence) {
-            document.getElementById('form-presence').value = isPresent ? '1' : '2';
+            const formPresence = document.getElementById('form-presence');
+            if (formPresence) {
+                formPresence.value = isPresent ? '1' : '2';
+            }
             storage('information').set('presence', isPresent);
         }
 
@@ -143,13 +190,13 @@ export const comment = (() => {
         }
 
         if (isPresent) {
-            badge.classList.remove('fa-circle-xmark', 'text-danger');
-            badge.classList.add('fa-circle-check', 'text-success');
+            badge.classList.remove('badge-absent');
+            badge.classList.add('badge-present');
             return;
         }
 
-        badge.classList.remove('fa-circle-check', 'text-success');
-        badge.classList.add('fa-circle-xmark', 'text-danger');
+        badge.classList.remove('badge-present');
+        badge.classList.add('badge-absent');
     };
 
     const send = async (button) => {
@@ -242,9 +289,11 @@ export const comment = (() => {
 
             if (length == pagination.getPer()) {
                 document.getElementById('comments').lastElementChild.remove();
+                currentOrder.pop();
             }
 
             document.getElementById('comments').innerHTML = card.renderContent(response.data) + document.getElementById('comments').innerHTML;
+            currentOrder.unshift(response.data.uuid);
             scroll();
         }
 
@@ -286,7 +335,7 @@ export const comment = (() => {
         let isChecklist = false;
         const badge = document.getElementById(`badge-${id}`);
         if (badge) {
-            isChecklist = badge.classList.contains('text-success');
+            isChecklist = badge.classList.contains('badge-present');
         }
 
         if (form.value.length === 0 || (util.base64Encode(form.value) === form.getAttribute('data-original') && isChecklist === isPresent) || confirm('Are you sure?')) {
@@ -337,7 +386,7 @@ export const comment = (() => {
     const comment = () => {
         card.renderLoading();
         const comments = document.getElementById('comments');
-        const onNullComment = `<div class="text-center p-4 my-2 bg-theme-${theme.isDarkMode('dark', 'light')} rounded-4 shadow"><p class="fw-bold p-0 m-0">Yuk bagikan undangan ini biar banyak komentarnya</p></div>`;
+        const onNullComment = `<div class="card" style="text-align: center;"><p style="font-weight: 600; margin: 0;">Yuk bagikan undangan ini biar banyak komentarnya</p></div>`;
 
         return request(HTTP_GET, `/api/comment?per=${pagination.getPer()}&next=${pagination.getNext()}`)
             .token(session.getToken())
@@ -356,6 +405,7 @@ export const comment = (() => {
                     }
 
                     comments.innerHTML = onNullComment;
+                    currentOrder = [];
                     return res;
                 }
 
@@ -375,6 +425,7 @@ export const comment = (() => {
 
                 showHide.set('hidden', traverse(res.data, showHide.get('hidden')));
                 comments.innerHTML = res.data.map((c) => card.renderContent(c)).join('');
+                currentOrder = res.data.map((c) => c.uuid);
                 res.data.forEach(fetchTracker);
 
                 return res;
@@ -384,7 +435,7 @@ export const comment = (() => {
                 // skeletons on screen forever (request.js already
                 // alerted the failure). Show an error + retry instead.
                 comments.setAttribute('data-loading', 'false');
-                comments.innerHTML = `<div class="text-center p-4 my-2 bg-theme-${theme.isDarkMode('dark', 'light')} rounded-4 shadow"><p class="fw-bold p-0 m-0">Gagal memuat komentar. Periksa koneksi, lalu coba lagi.</p><button class="btn btn-primary btn-sm rounded-4 mt-3" onclick="comment.comment()">Muat Ulang</button></div>`;
+                comments.innerHTML = `<div class="card" style="text-align: center;"><p style="font-weight: 600; margin: 0;">Gagal memuat komentar. Periksa koneksi, lalu coba lagi.</p><button class="btn btn-sm" style="margin-top: 12px;" onclick="comment.comment()">Muat Ulang</button></div>`;
             });
     };
 
@@ -461,13 +512,13 @@ export const comment = (() => {
                 // row used to throw an unhandled rejection here).
                 const el = document.getElementById(`ip-${comment.uuid}`);
                 if (el) {
-                    el.innerHTML = `<i class="fa-solid fa-location-dot me-1"></i>${util.escapeHtml(comment.ip)} <strong>${util.escapeHtml(result)}</strong>`;
+                    el.innerHTML = `${util.escapeHtml(comment.ip)} <strong>${util.escapeHtml(result)}</strong>`;
                 }
             })
             .catch((err) => {
                 const el = document.getElementById(`ip-${comment.uuid}`);
                 if (el) {
-                    el.innerHTML = `<i class="fa-solid fa-location-dot me-1"></i>${util.escapeHtml(comment.ip)} <strong>${util.escapeHtml(err.message)}</strong>`;
+                    el.innerHTML = `${util.escapeHtml(comment.ip)} <strong>${util.escapeHtml(err.message)}</strong>`;
                 }
             });
     };
@@ -504,5 +555,7 @@ export const comment = (() => {
         comment,
         showMore,
         showOrHide,
+        pin,
+        setSort,
     };
 })();

@@ -239,7 +239,7 @@ function findWish(list, uuid) {
   return null;
 }
 
-function wishHtml(w) {
+function wishHtml(w, isRoot) {
   const absent = w.presence === false;
   const badge = absent ? "Berhalangan" : "Datang";
   const ownMap = store.get(OWN_KEY);
@@ -250,7 +250,8 @@ function wishHtml(w) {
   let h = '<div class="wish" data-uuid="' + w.uuid + '">';
   h += '<div class="wish-head"><span class="wish-name">' + esc(w.name) +
     (w.is_admin ? ' <span class="wish-admin">Admin</span>' : "") +
-    '</span><span class="wish-badge' + (absent ? " absent" : "") + '">' + badge + "</span></div>";
+    '</span><span class="wish-badge' + (absent ? " absent" : "") + '">' + badge + "</span>" +
+    (isRoot && w.pinned ? '<span class="wish-pin"><svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>Disematkan</span>' : "") + "</div>";
   if (editingFor === w.uuid) {
     h += '<form class="wish-edit-form" data-edit-form="' + w.uuid + '">' +
       '<textarea class="f-in" name="emsg" rows="3" maxlength="500" required>' + esc(w.comment) + "</textarea>" +
@@ -274,7 +275,7 @@ function wishHtml(w) {
       '<button class="btn btn-ghost" type="button" data-cancel-reply="1">Batal</button></span></form>';
   }
   if (kids.length) {
-    h += '<div class="wish-replies">' + kids.map((k) => wishHtml(k)).join("") + "</div>";
+    h += '<div class="wish-replies">' + kids.map((k) => wishHtml(k, false)).join("") + "</div>";
   }
   h += "</div>";
   return h;
@@ -289,8 +290,10 @@ function renderWishes() {
   // ("Sabtu, 24 Okt 2026, 03.02 WIB"), so the old sort always fell
   // through to reverse() and "Terbaru" showed oldest first.
   // Both "Semua" and "Terbaru" are newest-first by API order.
-  let list = wishes;
-  box.innerHTML = list.map((w) => wishHtml(w)).join("");
+  // A pinned root comment always sorts first (stable sort keeps API
+  // order inside the pinned and unpinned groups).
+  let list = wishes.slice().sort((a, b) => Number(b.pinned === true) - Number(a.pinned === true));
+  box.innerHTML = list.map((w) => wishHtml(w, true)).join("");
 }
 
 async function loadWishes() {

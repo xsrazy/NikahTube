@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 const {
-    loadDB, withDB, noSave, getAuth, send, sendError, fail, readBody, clientIp,
+    loadDB, withDB, noSave, getAuth, send, sendError, fail, httpError, readBody, clientIp,
     filterBadWords, parsePresence, findComment, findByOwn, removeSubtree, formatDate,
 } = require('../_lib');
 
@@ -106,6 +106,26 @@ module.exports = async (req, res) => {
                     return noSave(false);
                 }
                 if (req.method === 'PUT') {
+                    // Pinned comments (dashboard feature): only admins
+                    // may pin, only top-level comments can be pinned, and
+                    // there is exactly one pinned comment at a time.
+                    if (body.pinned !== undefined && body.pinned !== null) {
+                        if (!isAdmin) {
+                            throw httpError(403, 'Hanya admin yang dapat menyematkan komentar.');
+                        }
+                        if (target.parent) {
+                            throw httpError(400, 'Hanya komentar utama yang dapat disematkan.');
+                        }
+                        const want = body.pinned === true || body.pinned === 1 || body.pinned === 'true';
+                        if (want) {
+                            for (const c of db.comments) {
+                                c.pinned = false;
+                            }
+                            target.pinned = true;
+                        } else {
+                            target.pinned = false;
+                        }
+                    }
                     if (!db.settings.can_edit && !isAdmin) {
                         return noSave(false);
                     }

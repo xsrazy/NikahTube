@@ -53,16 +53,14 @@ export const offline = (() => {
 
     const setOffline = () => {
         const el = alert.firstElementChild.firstElementChild;
-        el.classList.remove('bg-success');
-        el.classList.add('bg-danger');
-        el.firstElementChild.innerHTML = '<i class="fa-solid fa-ban me-1"></i>Koneksi tidak tersedia';
+        el.className = 'off-pill';
+        el.firstElementChild.textContent = 'Koneksi tidak tersedia';
     };
 
     const setOnline = () => {
         const el = alert.firstElementChild.firstElementChild;
-        el.classList.remove('bg-danger');
-        el.classList.add('bg-success');
-        el.firstElementChild.innerHTML = '<i class="fa-solid fa-cloud me-1"></i>Koneksi tersedia kembali';
+        el.className = 'off-pill ok';
+        el.firstElementChild.textContent = 'Koneksi tersedia kembali';
     };
 
     const setDefaultState = async () => {
@@ -108,9 +106,9 @@ export const offline = (() => {
 
         if (alert.childElementCount === 0) {
             alert.innerHTML = `
-            <div class="d-flex justify-content-center mx-auto">
-                <div class="d-flex justify-content-center align-items-center rounded-pill my-2 bg-danger shadow">
-                    <small class="text-center py-1 px-2 mx-1 text-white" style="font-size: 0.8rem;"></small>
+            <div class="off-wrap">
+                <div class="off-pill">
+                    <small></small>
                 </div>
             </div>`;
         }

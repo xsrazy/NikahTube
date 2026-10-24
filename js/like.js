@@ -36,8 +36,7 @@ export const like = (() => {
                         if (res.data.status) {
                             likes.unset(id);
 
-                            heart.classList.remove('fa-solid', 'text-danger');
-                            heart.classList.add('fa-regular');
+                            heart.classList.remove('liked');
 
                             info.setAttribute('data-count-like', (parseInt(info.getAttribute('data-count-like')) - 1).toString());
                         }
@@ -53,8 +52,7 @@ export const like = (() => {
                     if (res.code == 201) {
                         likes.set(id, res.data.uuid);
 
-                        heart.classList.remove('fa-regular');
-                        heart.classList.add('fa-solid', 'text-danger');
+                        heart.classList.add('liked');
 
                         info.setAttribute('data-count-like', (parseInt(info.getAttribute('data-count-like')) + 1).toString());
                     }

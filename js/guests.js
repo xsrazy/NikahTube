@@ -77,7 +77,7 @@ export const guests = (() => {
         }
 
         if (!items || items.length === 0) {
-            list.innerHTML = '<p class="m-0 p-0 text-center" style="font-size: 0.9rem;">Belum ada tamu tersimpan.</p>';
+            list.innerHTML = '<p class="muted">Belum ada tamu tersimpan.</p>';
             return;
         }
 
@@ -85,18 +85,14 @@ export const guests = (() => {
             const link = linkFor(g.name);
             const wa = waHref(g.name, link, '');
             return `
-            <div class="border rounded-4 p-3 mb-2">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div class="me-2" style="min-width: 0;">
-                        <p class="fw-bold m-0 p-0 text-truncate">${util.escapeHtml(g.name)}</p>
-                        <small class="text-break">${link}</small>
-                        <br><small>${util.escapeHtml(g.created_at)}</small>
-                    </div>
-                </div>
-                <div class="d-flex gap-2 mt-2">
-                    <a class="btn btn-success btn-sm rounded-4" style="font-size: 0.75rem;" target="_blank" rel="noopener" href="${wa}"><i class="fa-brands fa-whatsapp me-1"></i>Kirim WA</a>
-                    <button class="btn btn-outline-secondary btn-sm rounded-4" style="font-size: 0.75rem;" data-copy="${link}" onclick="util.copy(this, 'Tersalin')"><i class="fa-solid fa-copy me-1"></i>Salin Link</button>
-                    <button class="btn btn-outline-danger btn-sm rounded-4" style="font-size: 0.75rem;" onclick="guests.remove(this, '${g.id}')"><i class="fa-solid fa-trash me-1"></i>Hapus</button>
+            <div class="guest-row">
+                <p class="guest-name">${util.escapeHtml(g.name)}</p>
+                <div class="guest-link">${link}</div>
+                <div class="guest-date">${util.escapeHtml(g.created_at)}</div>
+                <div class="btn-row">
+                    <a class="btn btn-green btn-sm" target="_blank" rel="noopener" href="${wa}">Kirim WA</a>
+                    <button class="btn btn-sm" data-copy="${link}" onclick="util.copy(this, 'Tersalin')">Salin Link</button>
+                    <button class="btn btn-sm" onclick="guests.remove(this, '${g.id}')">Hapus</button>
                 </div>
             </div>`;
         }).join('');

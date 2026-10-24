@@ -1,11 +1,9 @@
 import { dto } from './dto.js';
 import { util } from './util.js';
-import { theme } from './theme.js';
 import { navbar } from './navbar.js';
 import { storage } from './storage.js';
 import { session } from './session.js';
 import { comment } from './comment.js';
-import { bootstrap } from './bootstrap.js';
 import { guests } from './guests.js';
 import { site } from './site.js';
 import { request, HTTP_GET, HTTP_PATCH, HTTP_PUT } from './request.js';
@@ -14,6 +12,81 @@ export const admin = (() => {
 
     let user = null;
 
+    const showLogin = () => {
+        document.getElementById('login-overlay')?.classList.add('open');
+    };
+
+    const hideLogin = () => {
+        document.getElementById('login-overlay')?.classList.remove('open');
+    };
+
+    const formatNumber = (n) => Number(n ?? 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+    const renderRsvpBars = (present, absent) => {
+        const el = document.getElementById('rsvp-bars');
+        if (!el) {
+            return;
+        }
+        const total = present + absent;
+        const pPct = total ? Math.round((present / total) * 100) : 0;
+        const aPct = total ? 100 - pPct : 0;
+        el.innerHTML = `
+            <div class="rsvp-row">
+                <div class="rsvp-label"><span>Hadir</span><span>${present} (${pPct}%)</span></div>
+                <div class="rsvp-track"><div class="rsvp-fill hadir" style="width: ${pPct}%"></div></div>
+            </div>
+            <div class="rsvp-row">
+                <div class="rsvp-label"><span>Berhalangan</span><span>${absent} (${aPct}%)</span></div>
+                <div class="rsvp-track"><div class="rsvp-fill absent" style="width: ${aPct}%"></div></div>
+            </div>`;
+    };
+
+    const loadRecentComments = () => {
+        const el = document.getElementById('recent-comments');
+        if (!el) {
+            return;
+        }
+        request(HTTP_GET, '/api/comment?per=3&next=0')
+            .token(session.getToken())
+            .send()
+            .then((res) => {
+                const items = res.data || [];
+                if (items.length === 0) {
+                    el.innerHTML = '<p class="muted">Belum ada komentar.</p>';
+                    return;
+                }
+                el.innerHTML = items.map((c) => {
+                    const text = String(c.comment || '').replace(/\s+/g, ' ').slice(0, 80);
+                    const pin = c.pinned ? '<span class="cmt-pin">Disematkan</span>' : '';
+                    return `<div class="recent-item"><div class="r-name">${util.escapeHtml(c.name)}${pin}</div><div class="r-text">${util.escapeHtml(text)}</div><div class="r-time">${util.escapeHtml(c.created_at || '')}</div></div>`;
+                }).join('');
+            })
+            .catch(() => {
+                el.innerHTML = '<p class="muted">Belum ada komentar.</p>';
+            });
+    };
+
+    const loadRecentGuests = () => {
+        const el = document.getElementById('recent-guests');
+        if (!el) {
+            return;
+        }
+        request(HTTP_GET, '/api/guest')
+            .token(session.getToken())
+            .send()
+            .then((res) => {
+                const items = (res.data || []).slice(0, 3);
+                if (items.length === 0) {
+                    el.innerHTML = '<p class="muted">Belum ada tamu tersimpan.</p>';
+                    return;
+                }
+                el.innerHTML = items.map((g) => `<div class="recent-item"><div class="r-name">${util.escapeHtml(g.name)}</div><div class="r-time">${util.escapeHtml(g.created_at || '')}</div></div>`).join('');
+            })
+            .catch(() => {
+                el.innerHTML = '<p class="muted">Belum ada tamu tersimpan.</p>';
+            });
+    };
+
     const getUserDetail = () => {
         request(HTTP_GET, '/api/user').token(session.getToken()).send().then((res) => {
 
@@ -21,7 +94,6 @@ export const admin = (() => {
                 user.set(key, value);
             }
 
-            document.getElementById('dashboard-name').innerHTML = `${util.escapeHtml(res.data.name)}<i class="fa-solid fa-hands text-warning ms-2"></i>`;
             document.getElementById('dashboard-email').textContent = res.data.email;
             document.getElementById('dashboard-accesskey').value = res.data.access_key;
             document.getElementById('button-copy-accesskey').setAttribute('data-copy', res.data.access_key);
@@ -41,18 +113,22 @@ export const admin = (() => {
             if (/unauthorized|invalid access key/i.test(msg)) {
                 try { session.logout(); } catch {}
                 try { if (user) { user.clear(); } } catch {}
-                bootstrap.Modal.getOrCreateInstance('#loginModal').show();
+                showLogin();
             }
         });
 
         request(HTTP_GET, '/api/stats').token(session.getToken()).send().then((res) => {
-            document.getElementById('count-comment').innerHTML = res.data.comments.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-            document.getElementById('count-like').innerHTML = res.data.likes.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-            document.getElementById('count-present').innerHTML = res.data.present.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-            document.getElementById('count-absent').innerHTML = res.data.absent.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            document.getElementById('count-comment').innerHTML = formatNumber(res.data.comments);
+            document.getElementById('count-like').innerHTML = formatNumber(res.data.likes);
+            document.getElementById('count-present').innerHTML = formatNumber(res.data.present);
+            document.getElementById('count-absent').innerHTML = formatNumber(res.data.absent);
             document.getElementById('count-follow-groom').textContent = (res.data.follows_groom ?? 0).toString();
             document.getElementById('count-follow-bride').textContent = (res.data.follows_bride ?? 0).toString();
+            renderRsvpBars(Number(res.data.present ?? 0), Number(res.data.absent ?? 0));
         });
+
+        loadRecentComments();
+        loadRecentGuests();
     };
 
     const changeFilterBadWord = async (checkbox) => {
@@ -168,7 +244,10 @@ export const admin = (() => {
             old.value = null;
             newest.value = null;
             button.disabled = true;
-            alert('Success change password');
+            alert('Password berhasil diubah. Silakan login ulang dengan password baru.');
+            try { user.clear(); } catch {}
+            session.logout();
+            showLogin();
         } else {
             alert('Gagal mengubah password. Periksa password lama, lalu coba lagi.');
         }
@@ -246,17 +325,20 @@ export const admin = (() => {
         }
 
         const res = await session.login(dto.postSessionRequest(formEmail.value, formPassword.value));
-        if (!res && loginError) {
-            loginError.textContent = 'Email atau password salah. Coba lagi.';
-            loginError.classList.remove('d-none');
-        }
-        if (res) {
+        if (res.code === 200) {
             getUserDetail();
             guests.load();
             comment.comment();
-            bootstrap.Modal.getOrCreateInstance('#loginModal').hide();
+            hideLogin();
             formEmail.value = null;
             formPassword.value = null;
+        } else if (loginError) {
+            loginError.textContent = res.code === 401
+                ? 'Email atau password salah. Coba lagi.'
+                : res.code === 429
+                    ? 'Terlalu banyak percobaan, coba lagi dalam 15 menit.'
+                    : 'Gagal terhubung, coba lagi.';
+            loginError.classList.remove('d-none');
         }
 
         btn.restore();
@@ -271,7 +353,7 @@ export const admin = (() => {
 
         user.clear();
         session.logout();
-        bootstrap.Modal.getOrCreateInstance('#loginModal').show();
+        showLogin();
     };
 
     const init = () => {
@@ -287,7 +369,6 @@ export const admin = (() => {
             storage('information').clear();
         }
 
-        theme.spyTop();
         comment.init();
 
         try {
@@ -300,7 +381,7 @@ export const admin = (() => {
             guests.load();
             comment.comment();
         } catch {
-            bootstrap.Modal.getOrCreateInstance('#loginModal').show();
+            showLogin();
             session.logout();
             user.clear();
         }

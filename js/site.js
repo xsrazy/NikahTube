@@ -100,6 +100,10 @@ export const site = (() => {
                 el.value = data[key];
             }
         }
+        const thumb = document.getElementById('konten-thumb-preview');
+        if (thumb && typeof data.album_art === 'string' && data.album_art) {
+            thumb.src = data.album_art;
+        }
     };
 
     const save = async (button) => {
@@ -136,10 +140,9 @@ export const site = (() => {
         input.dataset.uploadBound = '1';
         const host = input.closest('.col-md-6') || input.parentElement;
         const row = document.createElement('div');
-        row.className = 'mt-2 d-flex gap-2 align-items-center';
-        row.innerHTML = '<button type="button" class="btn btn-outline-success btn-sm rounded-4">'
-            + '<i class="fa-solid fa-upload me-1"></i>Upload</button>'
-            + '<span class="text-muted" style="font-size: 0.8rem;"></span>';
+        row.className = 'upload-row';
+        row.innerHTML = '<button type="button" class="btn btn-sm">Upload</button>'
+            + '<span class="upload-status"></span>';
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
         fileInput.hidden = true;
@@ -177,10 +180,9 @@ export const site = (() => {
         input.dataset.uploadBound = '1';
         const host = input.closest('.col-md-6') || input.parentElement;
         const row = document.createElement('div');
-        row.className = 'mt-2 d-flex gap-2 align-items-center';
-        row.innerHTML = '<button type="button" class="btn btn-outline-success btn-sm rounded-4">'
-            + '<i class="fa-solid fa-upload me-1"></i>Upload foto galeri</button>'
-            + '<span class="text-muted" style="font-size: 0.8rem;"></span>';
+        row.className = 'upload-row';
+        row.innerHTML = '<button type="button" class="btn btn-sm">Upload foto galeri</button>'
+            + '<span class="upload-status"></span>';
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
         fileInput.hidden = true;
@@ -220,6 +222,15 @@ export const site = (() => {
             addUploadControl(key, kind);
         }
         addGalleryControl();
+        const art = document.getElementById('site-album_art');
+        if (art) {
+            art.addEventListener('input', () => {
+                const thumb = document.getElementById('konten-thumb-preview');
+                if (thumb && art.value) {
+                    thumb.src = art.value;
+                }
+            });
+        }
     };
 
     return { fill, save, init, FIELDS };

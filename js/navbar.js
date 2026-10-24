@@ -1,57 +1,25 @@
-import { bootstrap } from './bootstrap.js';
-
 export const navbar = (() => {
 
     /**
-     * @param {HTMLElement} btn
+     * Switch the visible dashboard view and mark every nav button
+     * (sidebar and bottom nav) for that view as active.
+     * @param {string} view
+     * @param {HTMLElement} [btn]
      * @returns {void}
      */
-    const setActive = (btn) => {
-        ['button-mobile-home', 'button-mobile-setting', 'button-mobile-guest', 'button-mobile-konten'].forEach((id) => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.classList.remove('active');
-            }
+    const showView = (view, btn) => {
+        document.querySelectorAll('.view').forEach((el) => {
+            el.classList.toggle('active', el.id === `view-${view}`);
         });
-        btn.classList.add('active');
-    };
-
-    const buttonNavHome = (btn) => {
-        bootstrap.Tab.getOrCreateInstance(document.getElementById('button-home')).show();
-        setActive(btn);
-    };
-
-    /**
-     * @param {HTMLElement} btn
-     * @returns {void}
-     */
-    const buttonNavSetting = (btn) => {
-        bootstrap.Tab.getOrCreateInstance(document.getElementById('button-setting')).show();
-        setActive(btn);
-    };
-
-    /**
-     * @param {HTMLElement} btn
-     * @returns {void}
-     */
-    const buttonNavGuest = (btn) => {
-        bootstrap.Tab.getOrCreateInstance(document.getElementById('button-guest')).show();
-        setActive(btn);
-    };
-
-    /**
-     * @param {HTMLElement} btn
-     * @returns {void}
-     */
-    const buttonNavKonten = (btn) => {
-        bootstrap.Tab.getOrCreateInstance(document.getElementById('button-konten')).show();
-        setActive(btn);
+        document.querySelectorAll('[data-nav]').forEach((el) => {
+            el.classList.toggle('active', el.dataset.nav === view);
+        });
+        if (btn) {
+            btn.classList.add('active');
+        }
     };
 
     return {
-        buttonNavHome,
-        buttonNavSetting,
-        buttonNavGuest,
-        buttonNavKonten,
+        showView,
     };
 })();

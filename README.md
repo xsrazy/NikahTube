@@ -22,16 +22,16 @@ Everything on the page is managed from the admin dashboard: the couple's names, 
 - **Video stage**: a player-style stage (play/pause, red progress bar, timestamps, like button) that actually plays the background music, in a two-column watch layout with the Up Next sidebar on desktop.
 - **Countdown and Set Reminder**: a live countdown to the wedding day; "Set Reminder" opens Google Calendar (Save the Date), next to a Google Maps button for the venue.
 - **Real Subscribe**: the channel Subscribe button follows both partners at once and is recorded per visitor in the backend (subscribe/unsubscribe toggle); the subscriber count is the couple's combined fan count and updates live. Each partner also has an individual Follow button in the About section.
-- **Comments as guestbook**: post wishes with an RSVP status, like, reply (nested), edit, and delete your own comments (two-step inline confirm, no dialog). Filter chips switch between all comments and newest first. A built-in bad-word filter is included.
+- **Comments as guestbook**: post wishes with an RSVP status, like, reply (nested), edit, and delete your own comments (two-step inline confirm, no dialog). Filter chips switch between all comments and newest first. A built-in bad-word filter is included. The admin can pin one comment from the dashboard; it stays first with a "Disematkan" badge.
 - **Up Next gallery**: the sidebar lists gallery photos as video thumbnails, complete with fake durations.
 - **Shorts row**: the same gallery photos appear again as vertical 9:16 Shorts cards in a horizontal row; clicking one opens the full photo.
 - **Collapsible description box**: starts collapsed behind a "...selengkapnya" toggle and holds event chapters (ceremony and reception), venue and address, dress code, a holy verse, "channel" statistics, and love gift accounts (SeaBank and DANA) with working copy buttons.
-- **Admin dashboard**: secure login (scrypt-hashed password, JWT with revocation), a Web Content tab that edits everything on the page, media uploads (images are downscaled and re-encoded to WebP in the browser, audio up to 3 MB), guest list management, statistics, CSV export, and access-key rotation.
+- **Admin dashboard**: YouTube Studio-style dashboard (header plus sidebar navigation, analytics overview, video-details content editor, comment moderation queue, guest list). Secure login (scrypt-hashed password, JWT with revocation), media uploads (images are downscaled and re-encoded to WebP in the browser, audio up to 3 MB), guest list management, statistics, CSV export, and access-key rotation.
 - **SEO ready**: Open Graph and Twitter Card metadata, canonical URL, sitemap, and JSON-LD. Every `*.vercel.app` host permanently redirects to the main domain, and unknown paths bounce back to the homepage.
 
 ## Architecture
 
-- **Frontend**: vanilla HTML, CSS, and JavaScript. No framework, no build step. The public page is a single `index.html` with `css/app.css` and `js/app.js`; the dashboard uses Bootstrap and ES modules in `js/`.
+- **Frontend**: vanilla HTML, CSS, and JavaScript. No framework, no build step, no CDN. The public page is a single `index.html` with `css/app.css` and `js/app.js`; the dashboard is a custom YouTube Studio-style interface (`dashboard.html` with `css/dashboard.css` and vanilla JS in `js/`).
 - **Backend**: zero-dependency Node.js Vercel Functions in `api/`. All data (settings, site content, comments, guests, follows) lives in a single versioned JSON document in a private Vercel Blob store, written with optimistic concurrency.
 - **Authentication**: admins use JWTs (HS256) issued by the session endpoint; guests use an access key sent as the `x-access-key` header, published by the public config endpoint.
 - **Hosting**: Vercel (static hosting, serverless functions, Blob storage) with the custom domain `nikahtube.xsrazy.web.id`.

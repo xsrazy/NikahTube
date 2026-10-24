@@ -1,6 +1,5 @@
-import { dto } from './dto.js';
 import { storage } from './storage.js';
-import { request, HTTP_POST, HTTP_GET } from './request.js';
+import { request, HTTP_GET } from './request.js';
 
 export const session = (() => {
 
@@ -15,23 +14,35 @@ export const session = (() => {
     const getToken = () => ses.get('token');
 
     /**
+     * Direct fetch (not request.js) so the caller can see the real HTTP
+     * status: request.js alerts and throws on error bodies, which is why
+     * the old login collapsed every failure into one message.
      * @param {object} body
-     * @returns {Promise<boolean>}
+     * @returns {Promise<{code: number}>}
      */
-    const login = (body) => {
-        return request(HTTP_POST, '/api/session')
-            .body(body)
-            .send(dto.tokenResponse)
-            .then(
-                (res) => {
-                    if (res.code === 200) {
-                        setToken(res.data.token);
-                    }
+    const login = async (body) => {
+        let url = document.body.getAttribute('data-url');
+        if (url.slice(-1) === '/') {
+            url = url.slice(0, -1);
+        }
 
-                    return res.code === 200;
-                },
-                () => false
-            );
+        try {
+            const res = await fetch(url + '/api/session', {
+                method: 'POST',
+                headers: new Headers({
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                }),
+                body: JSON.stringify(body),
+            });
+            const json = await res.json().catch(() => ({}));
+            if (res.status === 200 && json.data?.token) {
+                setToken(json.data.token);
+            }
+            return { code: res.status };
+        } catch {
+            return { code: 0 };
+        }
     };
 
     /**

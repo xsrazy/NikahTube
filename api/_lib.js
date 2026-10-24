@@ -104,12 +104,15 @@ const defaultDB = () => ({
 // store genuinely contains no versions; read/parse failures of existing
 // versions throw, so a following write can never persist an empty DB
 // over real data. If the newest version is corrupt, the previous one is
-// tried before giving up.
+// tried before giving up; the result flags that fallback (with the
+// newest pathname seen) so withDB can supersede the corrupt version
+// instead of looping to 409 forever.
 async function loadDBVersioned() {
     const versions = await blobListVersions();
     if (versions.length === 0) {
-        return { db: defaultDB(), version: null };
+        return { db: defaultDB(), version: null, newest: null, isFallback: false };
     }
+    const newest = versions[0].pathname;
     let lastErr = null;
     for (const blob of versions.slice(0, 3)) {
         try {
@@ -135,7 +138,11 @@ async function loadDBVersioned() {
             } else {
                 db.settings.site = { ...defaultSite(), ...db.settings.site };
             }
-            return { db, version: blob.pathname };
+            const isFallback = blob.pathname !== newest;
+            if (isFallback) {
+                console.error(`corrupt newest blob version, fell back: newest=${newest} loaded=${blob.pathname}`);
+            }
+            return { db, version: blob.pathname, newest, isFallback };
         } catch (err) {
             lastErr = err;
         }
@@ -201,16 +208,37 @@ const saveDB = async (db) => {
 // fresh version instead of silently overwriting it. The mutator must be
 // re-runnable (it may run more than once) and returns either its result or
 // noSave(value) to finish without writing.
+//
+// KNOWN RESIDUAL (documented, not fixed): this is check-then-save, not
+// compare-and-swap — Blob storage offers no CAS primitive. Two writers
+// that both pass the version check before either saves can still lose
+// one update. The retry loop narrows the window but cannot eliminate it;
+// true safety would need serialized writes (a single-writer queue or an
+// external lock).
 async function withDB(mutator) {
     for (let attempt = 0; attempt < 6; attempt++) {
-        const { db, version } = await loadDBVersioned();
+        const { db, version, newest, isFallback } = await loadDBVersioned();
         const result = await mutator(db);
         if (result && typeof result === 'object' && result.__noSave) {
             return result.value;
         }
         const now = await blobListVersions();
-        const newest = now.length ? now[0].pathname : null;
-        if (newest !== version) {
+        const currentNewest = now.length ? now[0].pathname : null;
+        if (isFallback) {
+            // We loaded an older version because the newest is unreadable
+            // (corrupt). If nothing else saved since, the corrupt version
+            // is still newest: supersede it explicitly by saving (the new
+            // version becomes newest; the corrupt one is left behind and
+            // aged out by saveDB's cleanup). If another writer saved in
+            // the meantime, retry on the fresh version instead.
+            if (currentNewest === newest) {
+                console.error(`withDB superseding corrupt newest blob version: ${newest}`);
+                await saveDB(db);
+                return result;
+            }
+            continue;
+        }
+        if (currentNewest !== version) {
             continue; // lost the race; retry on the fresh version
         }
         await saveDB(db);
@@ -294,6 +322,17 @@ const verifyToken = (token) => {
         return null;
     }
     const [header, body, sig] = parts;
+    // Reject non-HS256 headers explicitly (an `alg: none` header must
+    // never be accepted, even though the signature check below would
+    // already fail it).
+    try {
+        const headerJson = JSON.parse(Buffer.from(header.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString());
+        if (!headerJson || headerJson.alg !== 'HS256') {
+            return null;
+        }
+    } catch {
+        return null;
+    }
     let expected;
     try {
         expected = crypto.createHmac('sha256', authSecret())
@@ -328,6 +367,11 @@ const getAuth = (req, db) => {
         if (payload && (payload.tv ?? -1) === (db.settings.token_version ?? 0)) {
             return { admin: payload };
         }
+        // A Bearer token was presented but is invalid, expired, or
+        // revoked: fail closed instead of falling through to the guest
+        // key, so a caller holding a stale token gets a clear 401
+        // rather than silently behaving as a guest.
+        return null;
     }
     const key = req.headers['x-access-key'];
     if (key && key === db.settings.access_key) {
@@ -418,13 +462,33 @@ const rateLimit = (bucket, limit, windowMs) => {
     }
     entry.count += 1;
     if (rateBuckets.size > 5000) {
-        rateBuckets.clear();
+        // Evict only the oldest entries (Map preserves insertion order).
+        // The old code called rateBuckets.clear(), which wiped EVERY
+        // counter (including an attacker's) once 5000 buckets existed.
+        while (rateBuckets.size > 5000) {
+            rateBuckets.delete(rateBuckets.keys().next().value);
+        }
     }
     return entry.count <= limit;
 };
 
-const clientIp = (req) =>
-    String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+// Drop one bucket entirely (used after a successful login so legitimate
+// logins never consume the login quota).
+const resetRateLimit = (bucket) => {
+    rateBuckets.delete(String(bucket));
+};
+
+const clientIp = (req) => {
+    // Take the LAST X-Forwarded-For entry: each proxy appends the IP it
+    // saw, so the last entry is the one appended by Vercel's trusted
+    // edge, while earlier entries are client-controlled and spoofable.
+    // (Previously the FIRST entry was used, so anyone could rotate
+    // identities at will.) Normal visitors send no spoofed header, so
+    // first == last for them.
+    const parts = String(req.headers['x-forwarded-for'] || '')
+        .split(',').map((s) => s.trim()).filter(Boolean);
+    return parts.length ? parts[parts.length - 1] : 'unknown';
+};
 
 // ---------- comments ----------
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
@@ -449,8 +513,9 @@ const filterBadWords = (text) => {
 };
 
 // Strict presence parsing (audit fix): only explicit attend values count
-// as attending; explicit absent values count as absent; anything else is
-// rejected by callers (null return).
+// as attending; explicit absent values count as absent; the value 3
+// (or '3'/'ragu') means "Masih Ragu" (unsure), a real third state;
+// anything else is rejected by callers (null return).
 const parsePresence = (value) => {
     if (value === undefined || value === null) {
         return true; // template default: attending
@@ -460,6 +525,9 @@ const parsePresence = (value) => {
     }
     if (value === false || value === 2 || value === '2' || value === 0 || value === '0') {
         return false;
+    }
+    if (value === 3 || value === '3' || value === 'ragu') {
+        return 'ragu';
     }
     return null;
 };
@@ -477,6 +545,9 @@ const toPublic = (comment, byParent, isAdmin) => {
         is_admin: comment.is_admin,
         pinned: comment.pinned === true,
         created_at: formatDate(comment.created_at),
+        // Raw ISO timestamp for clients that need a sortable order
+        // (the display format above cannot be parsed back into a date).
+        created_raw: comment.created_at,
         comments: replies,
         like: { love: (comment.likes || []).length },
     };
@@ -497,9 +568,12 @@ const buildTree = (comments) => {
         }
         byParent.get(key).push(c);
     }
+    // Pinned roots first, then newest first. Pagination slices this
+    // order, so a pinned root (if any) is always on the first page
+    // (next=0) and is not repeated on later pages.
     const roots = (byParent.get(null) || [])
         .slice()
-        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        .sort((a, b) => (b.pinned === true) - (a.pinned === true) || new Date(b.created_at) - new Date(a.created_at));
     return { roots, byParent };
 };
 
@@ -547,7 +621,7 @@ module.exports = {
     loadDB, loadDBVersioned, saveDB, withDB, noSave,
     hashPassword, verifyPassword, isLegacyHash,
     signToken, verifyToken, getAuth,
-    send, sendError, fail, httpError, readBody, rateLimit, clientIp,
+    send, sendError, fail, httpError, readBody, rateLimit, resetRateLimit, clientIp,
     formatDate, filterBadWords, parsePresence, toPublic, buildTree,
     findComment, findByOwn, commentDepth, removeSubtree, countAll, countLikes,
     defaultSite, countFollows,

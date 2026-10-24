@@ -11,19 +11,27 @@ module.exports = async (req, res) => {
         return sendError(res, 405, 'Method not allowed');
     }
     try {
+        // Auth first (before body validation), and the rate limit is
+        // checked once here — not inside the mutator, where a
+        // lost-update retry would burn extra quota.
+        const preDb = await loadDB();
+        const preAuth = getAuth(req, preDb);
+        if (!preAuth) {
+            return sendError(res, 401, 'Invalid access key');
+        }
         const body = await readBody(req);
         const artist = body.artist === 'bride' ? 'bride' : body.artist === 'groom' ? 'groom' : null;
         if (!artist) {
             return sendError(res, 400, 'Artis tidak valid.');
         }
         const ip = clientIp(req);
+        if (!preAuth.admin && !rateLimit(`follow:${ip}`, 30, 60 * 1000)) {
+            return sendError(res, 429, 'Terlalu cepat. Coba lagi sebentar.');
+        }
         const result = await withDB(async (db) => {
             const auth = getAuth(req, db);
             if (!auth) {
                 return noSave(null);
-            }
-            if (!auth.admin && !rateLimit(`follow:${ip}`, 30, 60 * 1000)) {
-                return noSave(undefined);
             }
             db.follows = db.follows || [];
             const idx = db.follows.findIndex((f) => f.artist === artist && f.ip === ip);
@@ -39,9 +47,6 @@ module.exports = async (req, res) => {
         });
         if (result === null) {
             return sendError(res, 401, 'Invalid access key');
-        }
-        if (result === undefined) {
-            return sendError(res, 429, 'Terlalu cepat. Coba lagi sebentar.');
         }
         return send(res, 200, result);
     } catch (err) {

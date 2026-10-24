@@ -14,9 +14,15 @@ export const comment = (() => {
     let tracker = null;
     let showHide = null;
 
-    // Root comment ids in the order the API returned them (newest
-    // first). setSort reorders the DOM from this list without refetching.
+    // Root comment ids in the order the API returned them (pinned
+    // first, then newest first). setSort reorders the DOM from this
+    // list without refetching.
     let currentOrder = [];
+
+    // Raw ISO timestamps per root id (from the API's created_raw), so
+    // the "Terbaru"/"Terlama" sorts can be strictly chronological
+    // instead of reusing the pinned-first API order.
+    let currentCreated = {};
 
     const changeButton = (id, disabled) => document.querySelector(`[data-button-action="${id}"]`).childNodes.forEach((e) => e.disabled = disabled);
 
@@ -92,7 +98,17 @@ export const comment = (() => {
         if (!list) {
             return;
         }
-        const order = mode === 'old' ? [...currentOrder].reverse() : currentOrder;
+        // "Semua" keeps the pinned-first API order; "Terbaru" is
+        // strictly chronological (pins NOT prioritized); "Terlama" is
+        // the reverse. Missing timestamps fall back to API order.
+        let order;
+        if (mode === 'new') {
+            order = [...currentOrder].sort((a, b) => String(currentCreated[b] || '').localeCompare(String(currentCreated[a] || '')));
+        } else if (mode === 'old') {
+            order = [...currentOrder].sort((a, b) => String(currentCreated[a] || '').localeCompare(String(currentCreated[b] || '')));
+        } else {
+            order = currentOrder;
+        }
         for (const uuid of order) {
             const el = document.getElementById(uuid);
             if (el) {
@@ -104,22 +120,26 @@ export const comment = (() => {
     const update = async (button) => {
         const id = button.getAttribute('data-uuid');
 
-        let isPresent = false;
+        // Tri-state presence: '1' = Datang, '2' = Berhalangan,
+        // '3' = Masih Ragu. Null when the edit form has no select
+        // (admin edits), meaning "leave presence unchanged".
+        let presenceVal = null;
         const presence = document.getElementById(`form-inner-presence-${id}`);
         if (presence) {
             presence.disabled = true;
-            isPresent = presence.value === '1';
+            presenceVal = presence.value;
         }
 
         const form = document.getElementById(`form-${id ? `inner-${id}` : 'comment'}`);
 
-        let isChecklist = false;
+        let badgeVal = null;
         const badge = document.getElementById(`badge-${id}`);
         if (badge) {
-            isChecklist = badge.classList.contains('badge-present');
+            badgeVal = badge.classList.contains('badge-present') ? '1'
+                : badge.classList.contains('badge-unsure') ? '3' : '2';
         }
 
-        if (id && util.base64Encode(form.value) === form.getAttribute('data-original') && isChecklist === isPresent) {
+        if (id && util.base64Encode(form.value) === form.getAttribute('data-original') && (!presence || badgeVal === presenceVal)) {
             changeButton(id, false);
             document.getElementById(`inner-${id}`).remove();
             return;
@@ -136,7 +156,7 @@ export const comment = (() => {
 
         const status = await request(HTTP_PUT, '/api/comment/' + owns.get(id))
             .token(session.getToken())
-            .body(dto.updateCommentRequest(presence ? isPresent : null, form.value))
+            .body(dto.updateCommentRequest(presenceVal !== null ? Number(presenceVal) : null, form.value))
             .send(dto.statusResponse)
             .then((res) => res.data.status, () => false);
 
@@ -180,34 +200,29 @@ export const comment = (() => {
         if (presence) {
             const formPresence = document.getElementById('form-presence');
             if (formPresence) {
-                formPresence.value = isPresent ? '1' : '2';
+                formPresence.value = presenceVal;
             }
-            storage('information').set('presence', isPresent);
+            storage('information').set('presence', presenceVal);
         }
 
         if (!presence || !badge) {
             return;
         }
 
-        if (isPresent) {
-            badge.classList.remove('badge-absent');
-            badge.classList.add('badge-present');
-            return;
-        }
-
-        badge.classList.remove('badge-present');
-        badge.classList.add('badge-absent');
+        badge.classList.remove('badge-present', 'badge-absent', 'badge-unsure');
+        badge.classList.add(presenceVal === '1' ? 'badge-present' : presenceVal === '3' ? 'badge-unsure' : 'badge-absent');
     };
 
     const send = async (button) => {
         const id = button.getAttribute('data-uuid');
 
-        const name = document.getElementById('form-name');
-        let nameValue = name.value;
-
-        if (session.isAdmin()) {
-            nameValue = user.get('name');
-        }
+        // The Ringkasan "Tulis komentar" card has no name field at all
+        // (only #form-comment), and #form-name lives in the Pengaturan
+        // view. For admins the display name comes explicitly from the
+        // loaded user data; for anyone else fall back to the field if
+        // it exists. Never crash on a missing #form-name.
+        const nameEl = document.getElementById('form-name');
+        let nameValue = session.isAdmin() ? (user.get('name') || '') : (nameEl ? nameEl.value : '');
 
         if (nameValue.length == 0) {
             alert('Silakan masukkan nama Anda.');
@@ -220,8 +235,8 @@ export const comment = (() => {
             return;
         }
 
-        if (!id && name && !session.isAdmin()) {
-            name.disabled = true;
+        if (!id && nameEl && !session.isAdmin()) {
+            nameEl.disabled = true;
         }
 
         if (presence && presence.value != '0') {
@@ -254,8 +269,8 @@ export const comment = (() => {
             .send(dto.postCommentResponse)
             .then((res) => res, () => null);
 
-        if (name) {
-            name.disabled = false;
+        if (nameEl) {
+            nameEl.disabled = false;
         }
 
         form.disabled = false;
@@ -326,19 +341,17 @@ export const comment = (() => {
     const cancel = (id) => {
         const form = document.getElementById(`form-inner-${id}`);
 
-        let isPresent = false;
         const presence = document.getElementById(`form-inner-presence-${id}`);
-        if (presence) {
-            isPresent = presence.value === '1';
-        }
+        const presenceVal = presence ? presence.value : null;
 
-        let isChecklist = false;
         const badge = document.getElementById(`badge-${id}`);
+        let badgeVal = null;
         if (badge) {
-            isChecklist = badge.classList.contains('badge-present');
+            badgeVal = badge.classList.contains('badge-present') ? '1'
+                : badge.classList.contains('badge-unsure') ? '3' : '2';
         }
 
-        if (form.value.length === 0 || (util.base64Encode(form.value) === form.getAttribute('data-original') && isChecklist === isPresent) || confirm('Are you sure?')) {
+        if (form.value.length === 0 || (util.base64Encode(form.value) === form.getAttribute('data-original') && (!presence || badgeVal === presenceVal)) || confirm('Are you sure?')) {
             changeButton(id, false);
             document.getElementById(`inner-${id}`).remove();
         }
@@ -426,6 +439,8 @@ export const comment = (() => {
                 showHide.set('hidden', traverse(res.data, showHide.get('hidden')));
                 comments.innerHTML = res.data.map((c) => card.renderContent(c)).join('');
                 currentOrder = res.data.map((c) => c.uuid);
+                currentCreated = {};
+                res.data.forEach((c) => { if (c.created_raw) currentCreated[c.uuid] = c.created_raw; });
                 res.data.forEach(fetchTracker);
 
                 return res;

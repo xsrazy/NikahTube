@@ -73,7 +73,15 @@ export const util = (() => {
      * @returns {void}
      */
     const modal = (img) => {
-        document.getElementById('show-modal-image').src = img.src;
+        // Guarded no-op when the modal markup or Bootstrap is absent
+        // (no CDN is loaded): the old code threw on the missing
+        // #show-modal-image element and on undefined bootstrap.Modal.
+        // No live caller exists today; this stays dormant, not broken.
+        const el = document.getElementById('show-modal-image');
+        if (!el || !img || !bootstrap || !bootstrap.Modal) {
+            return;
+        }
+        el.src = img.src;
         bootstrap.Modal.getOrCreateInstance('#modal-image').show();
     };
 

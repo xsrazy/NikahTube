@@ -1,7 +1,8 @@
 const crypto = require('crypto');
 const {
     loadDB, withDB, noSave, getAuth, send, sendError, fail, httpError, readBody, clientIp,
-    filterBadWords, parsePresence, findComment, findByOwn, removeSubtree, formatDate,
+    rateLimit, filterBadWords, parsePresence, toPublic, buildTree,
+    findComment, findByOwn, removeSubtree,
 } = require('../_lib');
 
 const MAX_COMMENT = 3000;
@@ -10,7 +11,9 @@ module.exports = async (req, res) => {
     try {
         const id = String(req.query.id || '');
 
-        // Show one comment (used by the edit form).
+        // Show one comment (used by the edit form). One shared
+        // serializer (toPublic), so pinned/like/own are included just
+        // like in list responses.
         if (req.method === 'GET') {
             const db = await loadDB();
             const auth = getAuth(req, db);
@@ -21,20 +24,25 @@ module.exports = async (req, res) => {
             if (!comment) {
                 return sendError(res, 404, 'Komentar tidak ditemukan.');
             }
-            return send(res, 200, {
-                name: comment.name,
-                presence: comment.presence,
-                comment: comment.comment,
-                is_admin: comment.is_admin,
-                created_at: formatDate(comment.created_at),
-            });
+            const { byParent } = buildTree(db.comments);
+            return send(res, 200, toPublic(comment, byParent, Boolean(auth.admin)));
         }
 
         // Like a comment. The id is the comment's public uuid. One like per
         // IP per comment (audit fix): a repeat like returns the existing
-        // like instead of inflating the count.
+        // like instead of inflating the count. Guests are rate-limited
+        // (admins exempt); the limit is checked once before withDB so a
+        // lost-update retry never burns extra quota.
         if (req.method === 'POST') {
+            const preDb = await loadDB();
+            const preAuth = getAuth(req, preDb);
+            if (!preAuth) {
+                return sendError(res, 401, 'Invalid access key');
+            }
             const ip = clientIp(req);
+            if (!preAuth.admin && !rateLimit(`like:${ip}`, 30, 60 * 1000)) {
+                return sendError(res, 429, 'Terlalu cepat. Coba lagi sebentar.');
+            }
             const likeUuid = await withDB(async (db) => {
                 const auth = getAuth(req, db);
                 if (!auth) {
@@ -66,16 +74,30 @@ module.exports = async (req, res) => {
             return send(res, 201, { uuid: likeUuid });
         }
 
-        // Unlike. The id is the like uuid returned when liking.
+        // Unlike. The id is the like uuid returned when liking. Only the
+        // liker's own IP (or an admin) may remove a like.
         if (req.method === 'PATCH') {
+            const preDb = await loadDB();
+            const preAuth = getAuth(req, preDb);
+            if (!preAuth) {
+                return sendError(res, 401, 'Invalid access key');
+            }
+            const ip = clientIp(req);
+            if (!preAuth.admin && !rateLimit(`like:${ip}`, 30, 60 * 1000)) {
+                return sendError(res, 429, 'Terlalu cepat. Coba lagi sebentar.');
+            }
             const removed = await withDB(async (db) => {
                 const auth = getAuth(req, db);
                 if (!auth) {
                     return noSave(null);
                 }
+                const isAdmin = Boolean(auth.admin);
                 for (const comment of db.comments) {
                     const idx = (comment.likes || []).findIndex((l) => l.uuid === id);
                     if (idx >= 0) {
+                        if (!isAdmin && comment.likes[idx].ip !== ip) {
+                            throw httpError(403, 'Bukan like Anda.');
+                        }
                         comment.likes.splice(idx, 1);
                         return true;
                     }
@@ -85,7 +107,10 @@ module.exports = async (req, res) => {
             if (removed === null) {
                 return sendError(res, 401, 'Invalid access key');
             }
-            return send(res, 200, { status: removed });
+            if (removed === false) {
+                return sendError(res, 404, 'Like tidak ditemukan.');
+            }
+            return send(res, 200, { status: true });
         }
 
         if (req.method === 'PUT' || req.method === 'DELETE') {
@@ -103,12 +128,16 @@ module.exports = async (req, res) => {
                 // may use the public uuid.
                 const target = findByOwn(db, id) || (isAdmin ? findComment(db, id) : null);
                 if (!target) {
-                    return noSave(false);
+                    throw httpError(404, 'Komentar tidak ditemukan.');
                 }
                 if (req.method === 'PUT') {
                     // Pinned comments (dashboard feature): only admins
                     // may pin, only top-level comments can be pinned, and
                     // there is exactly one pinned comment at a time.
+                    // Strict pinned validation: only real booleans, plus
+                    // exactly 1/'true' for pin and 0/'false' for unpin.
+                    // Anything else is a 400 BEFORE mutating (a loose
+                    // value used to silently unpin with a 200).
                     if (body.pinned !== undefined && body.pinned !== null) {
                         if (!isAdmin) {
                             throw httpError(403, 'Hanya admin yang dapat menyematkan komentar.');
@@ -116,7 +145,14 @@ module.exports = async (req, res) => {
                         if (target.parent) {
                             throw httpError(400, 'Hanya komentar utama yang dapat disematkan.');
                         }
-                        const want = body.pinned === true || body.pinned === 1 || body.pinned === 'true';
+                        let want;
+                        if (body.pinned === true || body.pinned === 1 || body.pinned === 'true') {
+                            want = true;
+                        } else if (body.pinned === false || body.pinned === 0 || body.pinned === 'false') {
+                            want = false;
+                        } else {
+                            throw httpError(400, 'Nilai sematan tidak valid.');
+                        }
                         if (want) {
                             for (const c of db.comments) {
                                 c.pinned = false;
@@ -127,11 +163,11 @@ module.exports = async (req, res) => {
                         }
                     }
                     if (!db.settings.can_edit && !isAdmin) {
-                        return noSave(false);
+                        throw httpError(403, 'Edit komentar sedang dimatikan.');
                     }
                     let text = String(body.comment ?? target.comment).trim();
                     if (text.length === 0 || text.length > MAX_COMMENT) {
-                        return noSave(false);
+                        throw httpError(400, 'Komentar tidak valid.');
                     }
                     if (db.settings.is_filter) {
                         text = filterBadWords(text);
@@ -139,14 +175,15 @@ module.exports = async (req, res) => {
                     target.comment = text;
                     if (body.presence !== null && body.presence !== undefined) {
                         const presence = parsePresence(body.presence);
-                        if (presence !== null) {
-                            target.presence = presence;
+                        if (presence === null) {
+                            throw httpError(400, 'Konfirmasi kehadiran tidak valid.');
                         }
+                        target.presence = presence;
                     }
                     return true;
                 }
                 if (!db.settings.can_delete && !isAdmin) {
-                    return noSave(false);
+                    throw httpError(403, 'Hapus komentar sedang dimatikan.');
                 }
                 removeSubtree(db, target.uuid);
                 return true;

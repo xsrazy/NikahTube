@@ -3,13 +3,20 @@ const { loadDB, getAuth, sendError, fail, formatDate } = require('./_lib');
 // Quote a CSV cell and neutralize spreadsheet formulas (audit fix): a
 // leading =, +, -, @, tab or CR would otherwise be evaluated by Excel /
 // Sheets even inside quotes, and names/comments are guest-controlled.
+// The check runs on the whitespace-trimmed value, so " =2+2" cannot
+// sneak a formula past the guard either.
 const csvCell = (value) => {
     let s = String(value ?? '');
-    if (/^[=+\-@\t\r]/.test(s)) {
+    if (/^[=+\-@\t\r]/.test(s.trimStart())) {
         s = `'${s}`;
     }
     return `"${s.replace(/"/g, '""')}"`;
 };
+
+// Presence label for the export: 'ragu' is a real third state, not
+// "Datang" (a truthy string used to fall into the Datang branch).
+const presenceLabel = (presence) =>
+    presence === 'ragu' ? 'Masih Ragu' : presence ? 'Datang' : 'Berhalangan';
 
 module.exports = async (req, res) => {
     if (req.method !== 'GET') {
@@ -38,7 +45,7 @@ module.exports = async (req, res) => {
                 .slice()
                 .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
             for (const c of siblings) {
-                rows.push([c.uuid, c.parent || '', c.name, c.presence ? 'Datang' : 'Berhalangan',
+                rows.push([c.uuid, c.parent || '', c.name, presenceLabel(c.presence),
                     c.comment, (c.likes || []).length, c.is_admin ? '1' : '0', c.ip || '',
                     c.user_agent || '', formatDate(c.created_at)]);
                 walk(c.uuid);

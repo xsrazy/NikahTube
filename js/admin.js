@@ -22,14 +22,15 @@ export const admin = (() => {
 
     const formatNumber = (n) => Number(n ?? 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 
-    const renderRsvpBars = (present, absent) => {
+    const renderRsvpBars = (present, absent, unsure) => {
         const el = document.getElementById('rsvp-bars');
         if (!el) {
             return;
         }
-        const total = present + absent;
+        const total = present + absent + unsure;
         const pPct = total ? Math.round((present / total) * 100) : 0;
-        const aPct = total ? 100 - pPct : 0;
+        const aPct = total ? Math.round((absent / total) * 100) : 0;
+        const uPct = total ? Math.max(0, 100 - pPct - aPct) : 0;
         el.innerHTML = `
             <div class="rsvp-row">
                 <div class="rsvp-label"><span>Hadir</span><span>${present} (${pPct}%)</span></div>
@@ -38,6 +39,10 @@ export const admin = (() => {
             <div class="rsvp-row">
                 <div class="rsvp-label"><span>Berhalangan</span><span>${absent} (${aPct}%)</span></div>
                 <div class="rsvp-track"><div class="rsvp-fill absent" style="width: ${aPct}%"></div></div>
+            </div>
+            <div class="rsvp-row">
+                <div class="rsvp-label"><span>Masih Ragu</span><span>${unsure} (${uPct}%)</span></div>
+                <div class="rsvp-track"><div class="rsvp-fill unsure" style="width: ${uPct}%"></div></div>
             </div>`;
     };
 
@@ -97,6 +102,10 @@ export const admin = (() => {
             document.getElementById('dashboard-email').textContent = res.data.email;
             document.getElementById('dashboard-accesskey').value = res.data.access_key;
             document.getElementById('button-copy-accesskey').setAttribute('data-copy', res.data.access_key);
+            const headerName = document.getElementById('dashboard-name');
+            if (headerName) {
+                headerName.textContent = res.data.name || '';
+            }
 
             document.getElementById('form-name').value = res.data.name;
             document.getElementById('filterBadWord').checked = Boolean(res.data.is_filter);
@@ -122,9 +131,16 @@ export const admin = (() => {
             document.getElementById('count-like').innerHTML = formatNumber(res.data.likes);
             document.getElementById('count-present').innerHTML = formatNumber(res.data.present);
             document.getElementById('count-absent').innerHTML = formatNumber(res.data.absent);
+            const unsureEl = document.getElementById('count-unsure');
+            if (unsureEl) {
+                unsureEl.innerHTML = formatNumber(res.data.unsure ?? 0);
+            }
             document.getElementById('count-follow-groom').textContent = (res.data.follows_groom ?? 0).toString();
             document.getElementById('count-follow-bride').textContent = (res.data.follows_bride ?? 0).toString();
-            renderRsvpBars(Number(res.data.present ?? 0), Number(res.data.absent ?? 0));
+            renderRsvpBars(Number(res.data.present ?? 0), Number(res.data.absent ?? 0), Number(res.data.unsure ?? 0));
+        }).catch(() => {
+            // request.js already alerted the failure; without a catch
+            // this promise left an unhandled rejection.
         });
 
         loadRecentComments();
@@ -221,6 +237,11 @@ export const admin = (() => {
             return;
         }
 
+        if (newest.value.length < 8) {
+            alert('Password baru minimal 8 karakter.');
+            return;
+        }
+
         old.disabled = true;
         newest.disabled = true;
 
@@ -248,9 +269,10 @@ export const admin = (() => {
             try { user.clear(); } catch {}
             session.logout();
             showLogin();
-        } else {
-            alert('Gagal mengubah password. Periksa password lama, lalu coba lagi.');
         }
+        // No second alert here: on failure request.js already showed the
+        // server's real reason (e.g. wrong old password), and alerting
+        // again would show two stacked dialogs.
     };
 
     const changeName = async (button) => {
@@ -333,11 +355,13 @@ export const admin = (() => {
             formEmail.value = null;
             formPassword.value = null;
         } else if (loginError) {
-            loginError.textContent = res.code === 401
-                ? 'Email atau password salah. Coba lagi.'
-                : res.code === 429
-                    ? 'Terlalu banyak percobaan, coba lagi dalam 15 menit.'
-                    : 'Gagal terhubung, coba lagi.';
+            loginError.textContent = res.code === 0
+                ? 'Gagal terhubung, coba lagi.'
+                : res.code === 401
+                    ? 'Email atau password salah. Coba lagi.'
+                    : res.code === 429
+                        ? 'Terlalu banyak percobaan, coba lagi dalam 15 menit.'
+                        : 'Terjadi kesalahan pada server, coba lagi.';
             loginError.classList.remove('d-none');
         }
 
@@ -350,6 +374,19 @@ export const admin = (() => {
         if (!confirm('Are you sure?')) {
             return;
         }
+
+        // Revoke server-side first (best-effort): DELETE /api/session
+        // bumps token_version, so a copied token stops working too. The
+        // local discard below runs even if the call fails.
+        try {
+            const token = session.getToken();
+            if (token) {
+                fetch('/api/session', {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + token },
+                }).catch(() => {});
+            }
+        } catch {}
 
         user.clear();
         session.logout();

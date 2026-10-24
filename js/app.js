@@ -97,7 +97,13 @@ $("#openBtn").addEventListener("click", () => {
 document.body.style.overflow = "hidden"; // kunci scroll selama cover tampil
 
 // ---- Countdown ----
-let targetMs = new Date(SITE.wedding_iso).getTime();
+// Guard against an invalid wedding_iso (admin free-text field): fall
+// back to the default date instead of displaying NaN cells.
+const resolveTargetMs = (iso) => {
+  const t = new Date(iso).getTime();
+  return isNaN(t) ? new Date(DEFAULT_SITE.wedding_iso).getTime() : t;
+};
+let targetMs = resolveTargetMs(SITE.wedding_iso);
 function tickCountdown() {
   const diff = Math.max(0, targetMs - Date.now());
   const d = Math.floor(diff / 86400000);
@@ -240,8 +246,10 @@ function findWish(list, uuid) {
 }
 
 function wishHtml(w, isRoot) {
-  const absent = w.presence === false;
-  const badge = absent ? "Berhalangan" : "Datang";
+  // Third presence state: 'ragu' ("Masih Ragu") is neither attending
+  // nor absent; it used to be recorded as Datang (1).
+  const badge = w.presence === "ragu" ? "Masih Ragu" : w.presence === false ? "Berhalangan" : "Datang";
+  const badgeCls = w.presence === "ragu" ? " unsure" : w.presence === false ? " absent" : "";
   const ownMap = store.get(OWN_KEY);
   const likeMap = store.get(LIKE_KEY);
   const liked = Boolean(likeMap[w.uuid]);
@@ -250,7 +258,7 @@ function wishHtml(w, isRoot) {
   let h = '<div class="wish" data-uuid="' + w.uuid + '">';
   h += '<div class="wish-head"><span class="wish-name">' + esc(w.name) +
     (w.is_admin ? ' <span class="wish-admin">Admin</span>' : "") +
-    '</span><span class="wish-badge' + (absent ? " absent" : "") + '">' + badge + "</span>" +
+    '</span><span class="wish-badge' + badgeCls + '">' + badge + "</span>" +
     (isRoot && w.pinned ? '<span class="wish-pin"><svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>Disematkan</span>' : "") + "</div>";
   if (editingFor === w.uuid) {
     h += '<form class="wish-edit-form" data-edit-form="' + w.uuid + '">' +
@@ -285,14 +293,17 @@ let wishSort = "all";
 function renderWishes() {
   const box = $("#wishList");
   $("#wishEmpty").classList.toggle("off", wishes.length > 0);
-  // Audit fix: the API already returns roots newest-first, and
-  // Date.parse cannot parse the Indonesian display format
-  // ("Sabtu, 24 Okt 2026, 03.02 WIB"), so the old sort always fell
-  // through to reverse() and "Terbaru" showed oldest first.
-  // Both "Semua" and "Terbaru" are newest-first by API order.
-  // A pinned root comment always sorts first (stable sort keeps API
-  // order inside the pinned and unpinned groups).
-  let list = wishes.slice().sort((a, b) => Number(b.pinned === true) - Number(a.pinned === true));
+  // "Semua" keeps pinned-first, then newest-first. "Terbaru" is
+  // strictly chronological (newest first, pins NOT prioritized) using
+  // the raw ISO timestamp, because the display format cannot be parsed
+  // back into a date. This gives the two chips a real distinction.
+  const byRawDesc = (a, b) => String(b.created_raw || "").localeCompare(String(a.created_raw || ""));
+  let list = wishes.slice();
+  if (wishSort === "new") {
+    list.sort(byRawDesc);
+  } else {
+    list.sort((a, b) => Number(b.pinned === true) - Number(a.pinned === true) || byRawDesc(a, b));
+  }
   box.innerHTML = list.map((w) => wishHtml(w, true)).join("");
 }
 
@@ -390,6 +401,15 @@ $("#wishList").addEventListener("click", async (e) => {
   }
 });
 
+// Map the guestbook presence select to the API's presence codes:
+// 1 = Datang, 2 = Berhalangan, 3 = Masih Ragu (real third state).
+const presenceFromSelect = () => {
+  const v = $("#wishPresence").value;
+  if (v === "Berhalangan") return 2;
+  if (v === "Masih Ragu") return 3;
+  return 1;
+};
+
 $("#wishList").addEventListener("submit", async (e) => {
   const replyForm = e.target.closest("[data-reply-form]");
   const editForm = e.target.closest("[data-edit-form]");
@@ -401,7 +421,7 @@ $("#wishList").addEventListener("submit", async (e) => {
     const name = String(fd.get("rname") || "").trim();
     const msg = String(fd.get("rmsg") || "").trim();
     if (!name || !msg) return;
-    const presence = $("#wishPresence").value === "Berhalangan" ? 2 : 1;
+    const presence = presenceFromSelect();
     try {
       const res = await fetch("/api/comment", {
         method: "POST",
@@ -444,7 +464,7 @@ $("#wishForm").addEventListener("submit", async (e) => {
   const msg = $("#wishMsg").value.trim();
   if (!name || !msg) return;
   if (!ACCESS_KEY) { alert("Buku tamu lagi tidak tersedia, coba lagi nanti."); return; }
-  const presence = $("#wishPresence").value === "Berhalangan" ? 2 : 1;
+  const presence = presenceFromSelect();
   const btn = e.target.querySelector('button[type="submit"]');
   btn.disabled = true;
   try {
@@ -603,7 +623,7 @@ function applySite() {
   if (audio && SITE.music_url && audio.getAttribute("src") !== SITE.music_url) {
     audio.src = SITE.music_url;
   }
-  targetMs = new Date(SITE.wedding_iso).getTime();
+  targetMs = resolveTargetMs(SITE.wedding_iso);
   tickCountdown();
   buildShare();
 }

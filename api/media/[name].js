@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
         };
         const listRes = await fetch(`${BLOB_API}?prefix=${encodeURIComponent(name)}&limit=10`, { headers });
         if (!listRes.ok) {
-            return res.status(502).end();
+            return res.status(listRes.status === 404 || listRes.status === 416 ? listRes.status : 502).end();
         }
         const list = await listRes.json();
         const blob = (list.blobs || []).find((b) => b.pathname === name);
@@ -39,7 +39,7 @@ module.exports = async (req, res) => {
         }
         const fileRes = await fetch(blob.url, { headers: fetchHeaders });
         if (!fileRes.ok && fileRes.status !== 206) {
-            return res.status(502).end();
+            return res.status(fileRes.status === 404 || fileRes.status === 416 ? fileRes.status : 502).end();
         }
         const ext = name.split('.').pop();
         res.status(fileRes.status);

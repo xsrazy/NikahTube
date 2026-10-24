@@ -92,6 +92,7 @@
                     <div class="stat-card"><p class="stat-label">Komentar</p><p class="stat-num" id="count-comment">–</p></div>
                     <div class="stat-card"><p class="stat-label">Hadir</p><p class="stat-num" id="count-present">–</p></div>
                     <div class="stat-card"><p class="stat-label">Berhalangan</p><p class="stat-num" id="count-absent">–</p></div>
+                    <div class="stat-card"><p class="stat-label">Masih Ragu</p><p class="stat-num" id="count-unsure">–</p></div>
                     <div class="stat-card"><p class="stat-label">Suka</p><p class="stat-num" id="count-like">–</p></div>
                     <div class="stat-card red"><p class="stat-label">Penggemar Usra</p><p class="stat-num" id="count-follow-groom">–</p></div>
                     <div class="stat-card pink"><p class="stat-label">Penggemar Zee</p><p class="stat-num" id="count-follow-bride">–</p></div>
@@ -521,7 +522,7 @@
         <div class="login-card">
             <h1>Login dashboard</h1>
             <p class="muted">Masuk sebagai admin NikahTube.</p>
-            <form onsubmit="return false">
+            <form onsubmit="admin.login(this.querySelector('button[type=submit]')); return false">
                 <div class="field">
                     <label class="field-label" for="loginEmail">Email</label>
                     <input class="input" type="email" id="loginEmail" placeholder="Masukkan email Anda" required autocomplete="email" autofocus>
@@ -531,7 +532,7 @@
                     <input class="input" type="password" id="loginPassword" placeholder="Masukkan password Anda" required autocomplete="current-password">
                 </div>
                 <div class="login-error d-none" id="loginError" role="alert"></div>
-                <button class="btn btn-red btn-block" type="submit" onclick="admin.login(this)">Login</button>
+                <button class="btn btn-red btn-block" type="submit">Login</button>
             </form>
         </div>
     </div>

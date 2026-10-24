@@ -114,6 +114,14 @@ export const site = (() => {
                 payload[key] = el.value;
             }
         }
+        // Validate the countdown target before PATCH: an invalid ISO
+        // date used to be stored verbatim and broke the public
+        // countdown (NaN cells) until someone fixed the field.
+        const isoEl = document.getElementById('site-wedding_iso');
+        if (isoEl && isoEl.value.trim() && isNaN(Date.parse(isoEl.value.trim()))) {
+            alert('Format tanggal & jam (ISO) tidak valid. Contoh yang benar: 2050-01-17T10:00:00+07:00');
+            return;
+        }
         const btn = util.disableButton(button);
         try {
             const res = await request(HTTP_PATCH, '/api/user')
@@ -121,6 +129,12 @@ export const site = (() => {
                 .body({ site: payload })
                 .send();
             if (res && res.data && res.data.status) {
+                // Refill from what the server actually stored, so a
+                // dropped field (e.g. over 6000 chars) visibly reverts
+                // instead of looking saved.
+                if (res.data.site) {
+                    fill(res.data.site);
+                }
                 alert('Konten web berhasil disimpan. Perubahan langsung tampil di halaman undangan.');
             } else {
                 alert('Gagal menyimpan. Coba lagi.');
@@ -138,7 +152,7 @@ export const site = (() => {
             return;
         }
         input.dataset.uploadBound = '1';
-        const host = input.closest('.col-md-6') || input.parentElement;
+        const host = input.closest('.field') || input.parentElement;
         const row = document.createElement('div');
         row.className = 'upload-row';
         row.innerHTML = '<button type="button" class="btn btn-sm">Upload</button>'
@@ -178,7 +192,7 @@ export const site = (() => {
             return;
         }
         input.dataset.uploadBound = '1';
-        const host = input.closest('.col-md-6') || input.parentElement;
+        const host = input.closest('.field') || input.parentElement;
         const row = document.createElement('div');
         row.className = 'upload-row';
         row.innerHTML = '<button type="button" class="btn btn-sm">Upload foto galeri</button>'

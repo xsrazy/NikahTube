@@ -37,14 +37,25 @@ module.exports = async (req, res) => {
         if (!kind || !ext) {
             return sendError(res, 400, 'Jenis file tidak didukung.');
         }
-        const data = Buffer.from(String(body.dataBase64 || ''), 'base64');
+        const dataBase64 = body.dataBase64;
+        if (typeof dataBase64 !== 'string') {
+            return sendError(res, 400, 'Data file tidak valid.');
+        }
+        const raw = dataBase64.replace(/\s/g, '');
+        const data = Buffer.from(raw, 'base64');
         if (data.length === 0) {
             return sendError(res, 400, 'File kosong.');
+        }
+        // Round-trip check (modulo padding): Buffer.from silently drops
+        // invalid characters, so without this a corrupt payload would be
+        // stored as a broken media file.
+        if (data.toString('base64').replace(/=+$/, '') !== raw.replace(/=+$/, '')) {
+            return sendError(res, 400, 'Data file tidak valid.');
         }
         if (data.length > MAX_BYTES) {
             return sendError(res, 400, 'Ukuran file melebihi batas 3 MB.');
         }
-        const name = `media-${Date.now()}-${crypto.randomBytes(4).toString('hex')}.${ext}`;
+        const name = `media-${Date.now()}-${crypto.randomBytes(8).toString('hex')}.${ext}`;
         const put = await fetch(`${BLOB_API}?pathname=${encodeURIComponent(name)}`, {
             method: 'PUT',
             headers: {

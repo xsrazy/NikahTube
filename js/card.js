@@ -131,7 +131,8 @@ export const card = (() => {
         }
 
         if (is_parent) {
-            return `<span class="cmt-name">${util.escapeHtml(comment.name)}</span><span id="badge-${comment.uuid}" class="badge-dot ${comment.presence ? 'badge-present' : 'badge-absent'}"></span>`;
+            const badgeCls = comment.presence === 'ragu' ? 'badge-unsure' : comment.presence ? 'badge-present' : 'badge-absent';
+            return `<span class="cmt-name">${util.escapeHtml(comment.name)}</span><span id="badge-${comment.uuid}" class="badge-dot ${badgeCls}"></span>`;
         }
 
         return `<span class="cmt-name">${util.escapeHtml(comment.name)}</span>`;
@@ -193,8 +194,9 @@ export const card = (() => {
         <label for="form-inner-${id}" class="field-label">Edit</label>
         ${document.getElementById(id).getAttribute('data-parent') === 'true' && !session.isAdmin() ? `
         <select class="input" id="form-inner-presence-${id}" offline-disabled>
-            <option value="1" ${presence ? 'selected' : ''}>Datang</option>
-            <option value="2" ${presence ? '' : 'selected'}>Berhalangan</option>
+            <option value="1" ${presence === true ? 'selected' : ''}>Datang</option>
+            <option value="2" ${presence === false ? 'selected' : ''}>Berhalangan</option>
+            <option value="3" ${presence === 'ragu' ? 'selected' : ''}>Masih Ragu</option>
         </select>` : ''}
         <textarea class="input" id="form-inner-${id}" placeholder="Type update comment" rows="3" offline-disabled></textarea>
         <div class="btn-row">

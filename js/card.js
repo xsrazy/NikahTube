@@ -12,7 +12,6 @@ export const card = (() => {
     let owns = null;
     let likes = null;
     let config = null;
-    let tracker = null;
     let showHide = null;
 
     const maxCommentLength = 250;
@@ -109,7 +108,7 @@ export const card = (() => {
 
         return `
         <div class="cmt-tracker">
-            <p id="ip-${comment.uuid}">${util.escapeHtml(comment.ip)} ${tracker.has(comment.ip) ? `<strong>${util.escapeHtml(tracker.get(comment.ip))}</strong>` : `<span class="skel-bar" style="display: inline-block; width: 80px; height: 12px; vertical-align: middle;"></span>`}</p>
+            <p id="ip-${comment.uuid}">${util.escapeHtml(comment.ip)}</p>
             <p>${util.escapeHtml(comment.user_agent)}</p>
         </div>`;
     };
@@ -212,7 +211,6 @@ export const card = (() => {
         owns = storage('owns');
         likes = storage('likes');
         config = storage('config');
-        tracker = storage('tracker');
         showHide = storage('comment');
     };
 

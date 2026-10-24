@@ -11,7 +11,6 @@ export const comment = (() => {
 
     let owns = null;
     let user = null;
-    let tracker = null;
     let showHide = null;
 
     // Root comment ids in the order the API returned them (pinned
@@ -441,7 +440,6 @@ export const comment = (() => {
                 currentOrder = res.data.map((c) => c.uuid);
                 currentCreated = {};
                 res.data.forEach((c) => { if (c.created_raw) currentCreated[c.uuid] = c.created_raw; });
-                res.data.forEach(fetchTracker);
 
                 return res;
             })
@@ -500,44 +498,6 @@ export const comment = (() => {
         anchor.setAttribute('data-show', isCollapsed ? 'true' : 'false');
     };
 
-    const fetchTracker = (comment) => {
-        if (!session.isAdmin()) {
-            return;
-        }
-
-        if (comment.comments) {
-            comment.comments.forEach(fetchTracker);
-        }
-
-        if (comment.ip === undefined || comment.user_agent === undefined || comment.is_admin || tracker.has(comment.ip)) {
-            return;
-        }
-
-        fetch(`https://freeipapi.com/api/json/${comment.ip}`)
-            .then((res) => res.json())
-            .then((res) => {
-                let result = res.cityName + ' - ' + res.regionName;
-
-                if (res.cityName == '-' && res.regionName == '-') {
-                    result = 'localhost';
-                }
-
-                tracker.set(comment.ip, result);
-                // Audit fix: null-check the target (a removed comment
-                // row used to throw an unhandled rejection here).
-                const el = document.getElementById(`ip-${comment.uuid}`);
-                if (el) {
-                    el.innerHTML = `${util.escapeHtml(comment.ip)} <strong>${util.escapeHtml(result)}</strong>`;
-                }
-            })
-            .catch((err) => {
-                const el = document.getElementById(`ip-${comment.uuid}`);
-                if (el) {
-                    el.innerHTML = `${util.escapeHtml(comment.ip)} <strong>${util.escapeHtml(err.message)}</strong>`;
-                }
-            });
-    };
-
     const scroll = () => document.getElementById('comments').scrollIntoView({ behavior: 'smooth' });
 
     const init = () => {
@@ -546,7 +506,6 @@ export const comment = (() => {
 
         owns = storage('owns');
         user = storage('user');
-        tracker = storage('tracker');
         showHide = storage('comment');
 
         if (!showHide.has('hidden')) {

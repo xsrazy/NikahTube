@@ -364,15 +364,24 @@ const httpError = (status, message) => {
 
 const readBody = async (req) => {
     let parsed;
-    if (req.body !== undefined && req.body !== null) {
-        if (typeof req.body === 'string') {
+    // Audit fix: Vercel's lazy req.body getter throws on a malformed
+    // JSON body (Content-Type: application/json). Accessing it outside
+    // try/catch used to surface as a raw 500; it must be a 400.
+    let rawBody;
+    try {
+        rawBody = req.body;
+    } catch {
+        throw httpError(400, 'Format data tidak valid.');
+    }
+    if (rawBody !== undefined && rawBody !== null) {
+        if (typeof rawBody === 'string') {
             try {
-                parsed = req.body ? JSON.parse(req.body) : {};
+                parsed = rawBody ? JSON.parse(rawBody) : {};
             } catch {
                 throw httpError(400, 'Format data tidak valid.');
             }
         } else {
-            parsed = req.body;
+            parsed = rawBody;
         }
     } else {
         const chunks = [];

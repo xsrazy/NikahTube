@@ -6,7 +6,10 @@ import { request, HTTP_GET, HTTP_POST, HTTP_DELETE } from './request.js';
 // (?to=Name), send them via WhatsApp, and keep a saved guest list.
 export const guests = (() => {
 
-    const SITE = 'https://nikah.xsrazy.web.id';
+    // The dashboard is served from the same domain as the invitation
+    // page, so guest links always point at this site (audit fix: this
+    // used to be hardcoded to the older Nikah site).
+    const SITE = location.origin;
 
     const linkFor = (name) => {
         const clean = String(name || '').trim().replace(/\s+/g, ' ');

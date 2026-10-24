@@ -32,6 +32,17 @@ export const admin = (() => {
             document.getElementById('editComment').checked = Boolean(res.data.can_edit);
             document.getElementById('deleteComment').checked = Boolean(res.data.can_delete);
             site.fill(res.data.site);
+        }).catch((err) => {
+            // Audit fix: an expired/revoked token used to leave the
+            // dashboard half-loaded with placeholders and no login
+            // prompt. Only auth failures force a re-login; transient
+            // errors keep the session (request.js already alerted).
+            const msg = err && err.message ? err.message : '';
+            if (/unauthorized|invalid access key/i.test(msg)) {
+                try { session.logout(); } catch {}
+                try { if (user) { user.clear(); } } catch {}
+                bootstrap.Modal.getOrCreateInstance('#loginModal').show();
+            }
         });
 
         request(HTTP_GET, '/api/stats').token(session.getToken()).send().then((res) => {
@@ -158,6 +169,8 @@ export const admin = (() => {
             newest.value = null;
             button.disabled = true;
             alert('Success change password');
+        } else {
+            alert('Gagal mengubah password. Periksa password lama, lalu coba lagi.');
         }
     };
 
@@ -189,6 +202,8 @@ export const admin = (() => {
             getUserDetail();
             button.disabled = true;
             alert('Success change name');
+        } else {
+            alert('Gagal mengubah nama. Coba lagi.');
         }
     };
 

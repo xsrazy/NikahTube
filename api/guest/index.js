@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { loadDB, withDB, getAuth, send, sendError, fail, readBody, formatDate } = require('../_lib');
+const { loadDB, withDB, noSave, getAuth, send, sendError, fail, readBody, formatDate } = require('../_lib');
 
 const toGuest = (g) => ({
     id: g.id,
@@ -36,7 +36,9 @@ module.exports = async (req, res) => {
             const guest = await withDB(async (db) => {
                 const auth = getAuth(req, db);
                 if (!auth || !auth.admin) {
-                    return null;
+                    // Audit fix: plain null used to save an unchanged DB
+                    // (one wasted blob version per unauthorized attempt).
+                    return noSave(null);
                 }
                 const g = {
                     id: crypto.randomUUID(),

@@ -89,7 +89,10 @@ module.exports = async (req, res) => {
         }
 
         if (req.method === 'PUT' || req.method === 'DELETE') {
-            const body = req.method === 'PUT' || req.method === 'DELETE' ? await readBody(req).catch(() => ({})) : {};
+            // Audit fix: a malformed PUT body must be a 400, not a silent
+            // no-op success. DELETE carries no body, so its parse errors
+            // stay swallowed (the body is ignored for deletes).
+            const body = req.method === 'PUT' ? await readBody(req) : await readBody(req).catch(() => ({}));
             const status = await withDB(async (db) => {
                 const auth = getAuth(req, db);
                 if (!auth) {

@@ -115,12 +115,22 @@ export const comment = (() => {
         document.getElementById(`inner-${id}`).remove();
 
         const show = document.querySelector(`[onclick="comment.showMore(this, '${id}')"]`);
-        const original = card.convertMarkdownToHTML(util.escapeHtml(form.value));
+        // Audit fix: truncate the plain text BEFORE markdown conversion,
+        // so the cut can never land inside an inserted HTML tag (and the
+        // length counts text, not markup). Store both variants so
+        // showMore never has to slice HTML either.
+        const plain = util.escapeHtml(form.value);
+        const original = card.convertMarkdownToHTML(plain);
+        const short = plain.length > card.maxCommentLength ? card.convertMarkdownToHTML(plain.slice(0, card.maxCommentLength)) + '...' : original;
         const content = document.getElementById(`content-${id}`);
 
-        content.innerHTML = show && show.getAttribute('data-show') == 'false' ? original.slice(0, card.maxCommentLength) + '...' : original;
-        if (original.length > card.maxCommentLength) {
+        content.innerHTML = show && show.getAttribute('data-show') == 'false' ? short : original;
+        if (plain.length > card.maxCommentLength) {
             content.setAttribute('data-comment', util.base64Encode(original));
+            content.setAttribute('data-comment-short', util.base64Encode(short));
+        } else {
+            content.removeAttribute('data-comment');
+            content.removeAttribute('data-comment-short');
         }
 
         if (presence) {
@@ -368,6 +378,13 @@ export const comment = (() => {
                 res.data.forEach(fetchTracker);
 
                 return res;
+            })
+            .catch(() => {
+                // Audit fix: a failed load used to leave loading
+                // skeletons on screen forever (request.js already
+                // alerted the failure). Show an error + retry instead.
+                comments.setAttribute('data-loading', 'false');
+                comments.innerHTML = `<div class="text-center p-4 my-2 bg-theme-${theme.isDarkMode('dark', 'light')} rounded-4 shadow"><p class="fw-bold p-0 m-0">Gagal memuat komentar. Periksa koneksi, lalu coba lagi.</p><button class="btn btn-primary btn-sm rounded-4 mt-3" onclick="comment.comment()">Muat Ulang</button></div>`;
             });
     };
 
@@ -406,9 +423,13 @@ export const comment = (() => {
     const showMore = (anchor, uuid) => {
         const comment = document.getElementById(`content-${uuid}`);
         const original = util.base64Decode(comment.getAttribute('data-comment'));
+        const shortAttr = comment.getAttribute('data-comment-short');
         const isCollapsed = anchor.getAttribute('data-show') === 'false';
 
-        comment.innerHTML = isCollapsed ? original : original.slice(0, card.maxCommentLength) + '...';
+        // Audit fix: toggle between the stored full/short variants instead
+        // of slicing HTML (a cut could land inside a tag). The slice
+        // fallback only covers DOM rendered before this fix.
+        comment.innerHTML = isCollapsed ? original : (shortAttr ? util.base64Decode(shortAttr) : original.slice(0, card.maxCommentLength) + '...');
         anchor.innerText = isCollapsed ? 'Sebagian' : 'Selengkapnya';
         anchor.setAttribute('data-show', isCollapsed ? 'true' : 'false');
     };
@@ -436,10 +457,18 @@ export const comment = (() => {
                 }
 
                 tracker.set(comment.ip, result);
-                document.getElementById(`ip-${comment.uuid}`).innerHTML = `<i class="fa-solid fa-location-dot me-1"></i>${util.escapeHtml(comment.ip)} <strong>${util.escapeHtml(result)}</strong>`;
+                // Audit fix: null-check the target (a removed comment
+                // row used to throw an unhandled rejection here).
+                const el = document.getElementById(`ip-${comment.uuid}`);
+                if (el) {
+                    el.innerHTML = `<i class="fa-solid fa-location-dot me-1"></i>${util.escapeHtml(comment.ip)} <strong>${util.escapeHtml(result)}</strong>`;
+                }
             })
             .catch((err) => {
-                document.getElementById(`ip-${comment.uuid}`).innerHTML = `<i class="fa-solid fa-location-dot me-1"></i>${util.escapeHtml(comment.ip)} <strong>${util.escapeHtml(err.message)}</strong>`;
+                const el = document.getElementById(`ip-${comment.uuid}`);
+                if (el) {
+                    el.innerHTML = `<i class="fa-solid fa-location-dot me-1"></i>${util.escapeHtml(comment.ip)} <strong>${util.escapeHtml(err.message)}</strong>`;
+                }
             });
     };
 

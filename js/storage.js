@@ -5,7 +5,17 @@ export const storage = (table) => {
      * @returns {any}
      */
     const get = (key = null) => {
-        const data = JSON.parse(localStorage.getItem(table));
+        // Audit fix: a corrupt table used to throw on every read/write.
+        // Fall back to an empty object (self-healing on the next set).
+        let data = null;
+        try {
+            data = JSON.parse(localStorage.getItem(table));
+        } catch {
+            data = null;
+        }
+        if (!data || typeof data !== 'object') {
+            data = {};
+        }
         return key ? data[String(key)] : data;
     };
 

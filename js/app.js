@@ -284,18 +284,12 @@ let wishSort = "all";
 function renderWishes() {
   const box = $("#wishList");
   $("#wishEmpty").classList.toggle("off", wishes.length > 0);
+  // Audit fix: the API already returns roots newest-first, and
+  // Date.parse cannot parse the Indonesian display format
+  // ("Sabtu, 24 Okt 2026, 03.02 WIB"), so the old sort always fell
+  // through to reverse() and "Terbaru" showed oldest first.
+  // Both "Semua" and "Terbaru" are newest-first by API order.
   let list = wishes;
-  if (wishSort === "new") {
-    const times = wishes.map((w) => Date.parse(w.created_at || ""));
-    if (times.every((t) => !isNaN(t))) {
-      list = wishes
-        .map((w, i) => ({ w, t: times[i] }))
-        .sort((a, b) => b.t - a.t)
-        .map((p) => p.w);
-    } else {
-      list = [...wishes].reverse();
-    }
-  }
   box.innerHTML = list.map((w) => wishHtml(w)).join("");
 }
 

@@ -144,8 +144,13 @@ export const card = (() => {
 
     const renderBody = (comment, is_parent) => {
         const text = theme.isDarkMode('light', 'dark');
-        const original = convertMarkdownToHTML(util.escapeHtml(comment.comment));
-        const moreThanMaxLength = original.length > maxCommentLength;
+        // Audit fix: truncate the plain text BEFORE markdown conversion,
+        // so the cut can never land inside an inserted <strong>/<em>/
+        // <code> tag, and the length counts text rather than markup.
+        const plain = util.escapeHtml(comment.comment);
+        const moreThanMaxLength = plain.length > maxCommentLength;
+        const original = convertMarkdownToHTML(plain);
+        const short = moreThanMaxLength ? convertMarkdownToHTML(plain.slice(0, maxCommentLength)) + '...' : original;
 
         return `
         <div class="d-flex flex-wrap justify-content-between align-items-center">
@@ -153,7 +158,7 @@ export const card = (() => {
             <small class="text-${text} m-0 p-0" style="font-size: 0.75rem;">${comment.created_at}</small>
         </div>
         <hr class="text-${text} my-1">
-        <p class="text-${text} my-1 mx-0 p-0" style="white-space: pre-wrap !important; font-size: 0.95rem;" ${moreThanMaxLength ? `data-comment="${util.base64Encode(original)}"` : ''} id="content-${comment.uuid}">${moreThanMaxLength ? (original.slice(0, maxCommentLength) + '...') : original}</p>
+        <p class="text-${text} my-1 mx-0 p-0" style="white-space: pre-wrap !important; font-size: 0.95rem;" ${moreThanMaxLength ? `data-comment="${util.base64Encode(original)}" data-comment-short="${util.base64Encode(short)}"` : ''} id="content-${comment.uuid}">${short}</p>
         ${moreThanMaxLength ? `<p class="mb-2 mt-0 mx-0 p-0"><a class="text-${text}" role="button" style="font-size: 0.85rem;" data-show="false" onclick="comment.showMore(this, '${comment.uuid}')">Selengkapnya</a></p>` : ''}`;
     };
 

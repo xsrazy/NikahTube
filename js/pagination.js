@@ -127,7 +127,9 @@ export const pagination = (() => {
     const previous = async (button) => {
         disabledPrevious();
 
-        if (pageNow < 0) {
+        // Audit fix: pageNow is 0 on page 1, so `< 0` never guarded and
+        // a stray Previous could fetch next=-10 -> an empty list.
+        if (pageNow <= 0) {
             return;
         }
 

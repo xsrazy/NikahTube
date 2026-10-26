@@ -315,8 +315,37 @@ async function loadWishes() {
     if (json && Array.isArray(json.data)) {
       wishes = json.data;
       renderWishes();
+      // A full first page may hide more roots: show load-more only
+      // then (a short page means everything is already shown).
+      const more = $("#wishMore");
+      if (more) more.style.display = json.data.length === 50 ? "" : "none";
     }
   } catch (e) { /* biarkan kosong */ }
+}
+
+// Public guestbook pagination: the first load caps at 50 roots, and
+// without this the 51st root existed in the database but was
+// unreachable for visitors. Appends the next page and hides the
+// button on a short page (no more roots).
+async function loadMoreWishes() {
+  const btn = $("#wishMore");
+  if (!ACCESS_KEY || !btn || btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = "Memuat...";
+  try {
+    const res = await fetch("/api/comment?per=50&next=" + wishes.length, { headers: { "x-access-key": ACCESS_KEY } });
+    const json = await res.json();
+    if (res.ok && json && Array.isArray(json.data)) {
+      const seen = new Set(wishes.map((w) => w.uuid));
+      wishes = wishes.concat(json.data.filter((w) => !seen.has(w.uuid)));
+      renderWishes();
+      if (json.data.length < 50) btn.style.display = "none";
+    } else {
+      alert("Gagal memuat komentar. Coba lagi.");
+    }
+  } catch (e) { alert("Gagal memuat komentar. Coba lagi."); }
+  btn.disabled = false;
+  btn.textContent = "Muat lebih banyak";
 }
 
 async function toggleLike(uuid, btn) {
@@ -342,7 +371,11 @@ async function toggleLike(uuid, btn) {
       if (res.ok && json.data && json.data.uuid) {
         likeMap[uuid] = json.data.uuid;
         w.like = w.like || { love: 0 };
-        w.like.love = (w.like.love || 0) + 1;
+        // Idempotent like: an existing server-side like returns
+        // isNew=false and must not increment locally (already counted).
+        if (json.data.isNew !== false) {
+          w.like.love = (w.like.love || 0) + 1;
+        }
       }
     }
     store.set(LIKE_KEY, likeMap);
@@ -351,6 +384,8 @@ async function toggleLike(uuid, btn) {
     btn.disabled = false;
   }
 }
+
+$("#wishMore").addEventListener("click", loadMoreWishes);
 
 $("#wishList").addEventListener("click", async (e) => {
   const likeBtn = e.target.closest("[data-like]");

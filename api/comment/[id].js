@@ -30,7 +30,8 @@ module.exports = async (req, res) => {
 
         // Like a comment. The id is the comment's public uuid. One like per
         // IP per comment (audit fix): a repeat like returns the existing
-        // like instead of inflating the count. Guests are rate-limited
+        // like instead of inflating the count, with isNew:false so
+        // frontends don't double-count it locally. Guests are rate-limited
         // (admins exempt); the limit is checked once before withDB so a
         // lost-update retry never burns extra quota.
         if (req.method === 'POST') {
@@ -43,7 +44,7 @@ module.exports = async (req, res) => {
             if (!preAuth.admin && !rateLimit(`like:${ip}`, 30, 60 * 1000)) {
                 return sendError(res, 429, 'Terlalu cepat. Coba lagi sebentar.');
             }
-            const likeUuid = await withDB(async (db) => {
+            const likeResult = await withDB(async (db) => {
                 const auth = getAuth(req, db);
                 if (!auth) {
                     return noSave(null);
@@ -55,7 +56,7 @@ module.exports = async (req, res) => {
                 comment.likes = comment.likes || [];
                 const existing = comment.likes.find((l) => l.ip === ip);
                 if (existing) {
-                    return noSave(existing.uuid);
+                    return noSave({ uuid: existing.uuid, isNew: false });
                 }
                 const like = {
                     uuid: crypto.randomUUID(),
@@ -63,15 +64,15 @@ module.exports = async (req, res) => {
                     created_at: new Date().toISOString(),
                 };
                 comment.likes.push(like);
-                return like.uuid;
+                return { uuid: like.uuid, isNew: true };
             });
-            if (likeUuid === null) {
+            if (likeResult === null) {
                 return sendError(res, 401, 'Invalid access key');
             }
-            if (likeUuid === undefined) {
+            if (likeResult === undefined) {
                 return sendError(res, 404, 'Komentar tidak ditemukan.');
             }
-            return send(res, 201, { uuid: likeUuid });
+            return send(res, 201, { uuid: likeResult.uuid, isNew: likeResult.isNew });
         }
 
         // Unlike. The id is the like uuid returned when liking. Only the

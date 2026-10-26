@@ -140,7 +140,8 @@ export const site = (() => {
                 alert('Gagal menyimpan. Coba lagi.');
             }
         } catch {
-            alert('Gagal menyimpan. Coba lagi.');
+            // No second alert: request.js already showed the failure
+            // reason, and alerting again would stack dialogs.
         } finally {
             btn.restore();
         }

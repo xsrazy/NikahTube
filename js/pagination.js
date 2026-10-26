@@ -39,8 +39,9 @@ export const pagination = (() => {
         button.innerHTML = `<div class="spinner-border spinner-border-sm my-0 mx-1 p-0" style="height: 0.8rem; width: 0.8rem;"></div>`;
 
         const process = async () => {
+            let ok = false;
             try {
-                await comment.comment();
+                ok = await comment.comment();
             } finally {
                 // Always restore the button (audit fix): a failed fetch
                 // used to leave it disabled with a spinner forever.
@@ -49,22 +50,36 @@ export const pagination = (() => {
             }
 
             comment.scroll();
+            return !!ok;
         };
 
         const next = async () => {
+            const prevNow = pageNow;
             pageNow += perPage;
 
             button.innerHTML = 'Next' + button.innerHTML;
-            await process();
-            page.innerText = parseInt(page.innerText) + 1;
+            const ok = await process();
+            // A failed load used to leave the counter advanced onto an
+            // error card, so the next Next skipped the failed page.
+            // Revert instead: Next retries the same page.
+            if (ok) {
+                page.innerText = parseInt(page.innerText) + 1;
+            } else {
+                pageNow = prevNow;
+            }
         };
 
         const prev = async () => {
+            const prevNow = pageNow;
             pageNow -= perPage;
 
             button.innerHTML = button.innerHTML + 'Prev';
-            await process();
-            page.innerText = parseInt(page.innerText) - 1;
+            const ok = await process();
+            if (ok) {
+                page.innerText = parseInt(page.innerText) - 1;
+            } else {
+                pageNow = prevNow;
+            }
         };
 
         return {

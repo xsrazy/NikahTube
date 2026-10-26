@@ -22,7 +22,7 @@ export const dto = (() => {
         };
     });
 
-    const postCommentResponse = (({ uuid, own, name, presence, comment, created_at, pinned }) => {
+    const postCommentResponse = (({ uuid, own, name, presence, comment, created_at, created_raw, pinned }) => {
         let is_admin = false;
         let comments = [];
         let like = likeCommentResponse();
@@ -35,6 +35,7 @@ export const dto = (() => {
             comment,
             is_admin,
             created_at,
+            created_raw,
             pinned: pinned === true,
             comments,
             like,
@@ -53,9 +54,10 @@ export const dto = (() => {
         };
     });
 
-    const uuidResponse = (({ uuid }) => {
+    const uuidResponse = (({ uuid, isNew }) => {
         return {
             uuid,
+            isNew,
         };
     });
 

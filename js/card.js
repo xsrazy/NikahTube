@@ -126,7 +126,7 @@ export const card = (() => {
 
     const renderTitle = (comment, is_parent) => {
         if (comment.is_admin) {
-            return `<span class="cmt-name">${util.escapeHtml(user.get('name') ?? config.get('name'))}</span><span class="cmt-admin">Admin</span>`;
+            return `<span class="cmt-name">${util.escapeHtml(user.get('name') ?? config.get('name') ?? '')}</span><span class="cmt-admin">Admin</span>`;
         }
 
         if (is_parent) {

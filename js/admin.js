@@ -93,7 +93,7 @@ export const admin = (() => {
     };
 
     const getUserDetail = () => {
-        request(HTTP_GET, '/api/user').token(session.getToken()).send().then((res) => {
+        return request(HTTP_GET, '/api/user').token(session.getToken()).send().then((res) => {
 
             for (let [key, value] of Object.entries(res.data)) {
                 user.set(key, value);
@@ -157,6 +157,10 @@ export const admin = (() => {
                     filter: Boolean(checkbox.checked)
                 }).
                 send();
+        } catch {
+            // request.js already alerted; revert the toggle so the
+            // checkbox never shows a state the server did not keep.
+            checkbox.checked = !checkbox.checked;
         } finally {
             label.restore();
         }
@@ -172,6 +176,8 @@ export const admin = (() => {
                     can_reply: Boolean(checkbox.checked)
                 }).
                 send();
+        } catch {
+            checkbox.checked = !checkbox.checked;
         } finally {
             label.restore();
         }
@@ -187,6 +193,8 @@ export const admin = (() => {
                     can_edit: Boolean(checkbox.checked)
                 }).
                 send();
+        } catch {
+            checkbox.checked = !checkbox.checked;
         } finally {
             label.restore();
         }
@@ -202,6 +210,8 @@ export const admin = (() => {
                     can_delete: Boolean(checkbox.checked)
                 }).
                 send();
+        } catch {
+            checkbox.checked = !checkbox.checked;
         } finally {
             label.restore();
         }
@@ -303,15 +313,27 @@ export const admin = (() => {
             getUserDetail();
             button.disabled = true;
             alert('Success change name');
-        } else {
-            alert('Gagal mengubah nama. Coba lagi.');
         }
+        // No second alert on failure: request.js already showed the
+        // server's real reason (the rejection handler above turned it
+        // into result=false), and alerting again would stack dialogs.
     };
 
     const download = async (button) => {
         const btn = util.disableButton(button);
 
-        await request(HTTP_GET, '/api/download').token(session.getToken()).download();
+        // download() returns false on non-200 (no alert) and rethrows
+        // (already alerted) on network errors: alert only for the
+        // silent false case, and never leave an unhandled rejection.
+        let ok = null;
+        try {
+            ok = await request(HTTP_GET, '/api/download').token(session.getToken()).download();
+        } catch {
+            ok = null;
+        }
+        if (ok === false) {
+            alert('Gagal mengunduh. Coba lagi.');
+        }
 
         btn.restore();
     };
@@ -348,7 +370,10 @@ export const admin = (() => {
 
         const res = await session.login(dto.postSessionRequest(formEmail.value, formPassword.value));
         if (res.code === 200) {
-            getUserDetail();
+            // Await the user detail before rendering the list: the old
+            // fire-and-forget race rendered the admin name as literal
+            // "undefined" and blocked admin posts until /api/user landed.
+            await getUserDetail();
             guests.load();
             comment.comment();
             hideLogin();

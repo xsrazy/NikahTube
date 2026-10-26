@@ -49,6 +49,7 @@ export const comment = (() => {
         if (!status) {
             btn.restore();
             like.disabled = false;
+            changeButton(id, false);
             return;
         }
 
@@ -306,8 +307,21 @@ export const comment = (() => {
                 currentOrder.pop();
             }
 
+            // A fresh post on an empty/error list used to sit above a
+            // stale "no comments yet" (or error) card: the prepend path
+            // kept the placeholder. Clear it first when no real comment
+            // is shown, and drop the stale order with it.
+            const listEl = document.getElementById('comments');
+            if (![...listEl.children].some((el) => el.classList.contains('cmt'))) {
+                listEl.innerHTML = '';
+                currentOrder = [];
+            }
+
             document.getElementById('comments').innerHTML = card.renderContent(response.data) + document.getElementById('comments').innerHTML;
             currentOrder.unshift(response.data.uuid);
+            if (response.data.created_raw) {
+                currentCreated[response.data.uuid] = response.data.created_raw;
+            }
             scroll();
         }
 
@@ -377,22 +391,36 @@ export const comment = (() => {
         changeButton(id, true);
         const btn = util.disableButton(button);
 
-        await request(HTTP_GET, '/api/comment/' + id)
-            .token(session.getToken())
-            .send(dto.commentResponse)
-            .then((res) => {
-                if (res.code !== 200) {
-                    return;
-                }
+        // A failed fetch used to leave the button stuck on "Loading.."
+        // and the whole action row disabled (request.js rethrows after
+        // alerting, so the restore below never ran). Only keep the
+        // button disabled when the edit form actually opened.
+        let opened = false;
+        try {
+            await request(HTTP_GET, '/api/comment/' + id)
+                .token(session.getToken())
+                .send(dto.commentResponse)
+                .then((res) => {
+                    if (res.code !== 200) {
+                        return;
+                    }
 
-                document.getElementById(`button-${id}`).insertAdjacentElement('afterend', card.renderEdit(id, res.data.presence));
-                const formInner = document.getElementById(`form-inner-${id}`);
-                formInner.value = res.data.comment;
-                formInner.setAttribute('data-original', util.base64Encode(res.data.comment));
-            });
+                    document.getElementById(`button-${id}`).insertAdjacentElement('afterend', card.renderEdit(id, res.data.presence));
+                    const formInner = document.getElementById(`form-inner-${id}`);
+                    formInner.value = res.data.comment;
+                    formInner.setAttribute('data-original', util.base64Encode(res.data.comment));
+                    opened = true;
+                });
+        } catch {
+            // request.js already alerted the real reason.
+        }
 
         btn.restore();
-        button.disabled = true;
+        if (opened) {
+            button.disabled = true;
+        } else {
+            changeButton(id, false);
+        }
     };
 
     const comment = () => {
@@ -447,8 +475,12 @@ export const comment = (() => {
                 // Audit fix: a failed load used to leave loading
                 // skeletons on screen forever (request.js already
                 // alerted the failure). Show an error + retry instead.
+                // Return false so pagination can tell the load failed
+                // and keep its counter on the failed page (retry, not
+                // skip).
                 comments.setAttribute('data-loading', 'false');
                 comments.innerHTML = `<div class="card" style="text-align: center;"><p style="font-weight: 600; margin: 0;">Gagal memuat komentar. Periksa koneksi, lalu coba lagi.</p><button class="btn btn-sm" style="margin-top: 12px;" onclick="comment.comment()">Muat Ulang</button></div>`;
+                return false;
             });
     };
 

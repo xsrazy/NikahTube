@@ -54,7 +54,13 @@ export const like = (() => {
 
                         heart.classList.add('liked');
 
-                        info.setAttribute('data-count-like', (parseInt(info.getAttribute('data-count-like')) + 1).toString());
+                        // The like endpoint is idempotent: a repeat like
+                        // returns the existing UUID with isNew=false.
+                        // Only count fresh likes locally, or the count
+                        // diverges (the server already counted it).
+                        if (res.data.isNew !== false) {
+                            info.setAttribute('data-count-like', (parseInt(info.getAttribute('data-count-like')) + 1).toString());
+                        }
                     }
                 });
         } catch {

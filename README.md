@@ -2,8 +2,8 @@
 
 A digital wedding invitation dressed as a video watch page: a premiere thumbnail, a working Subscribe button, a comments section as the guestbook, and an Up Next gallery. Free and open source.
 
-**Live demo:** https://yunikah.xsrazy.web.id
-**Dashboard:** https://yunikah.xsrazy.web.id/dashboard
+**Live demo:** https://yuunikah.xsrazy.web.id
+**Dashboard:** https://yuunikah.xsrazy.web.id/dashboard
 
 ![YuuNikah — Usra & Zee: The Wedding Premiere](assets/images/og-image.jpg)
 
@@ -34,7 +34,7 @@ Everything on the page is managed from the admin dashboard: the couple's names, 
 - **Frontend**: vanilla HTML, CSS, and JavaScript. No framework, no build step, no CDN. The public page is a single `index.html` with `css/app.css` and `js/app.js`; the dashboard is a custom YouTube Studio-style interface (`dashboard.html` with `css/dashboard.css` and vanilla JS in `js/`).
 - **Backend**: zero-dependency Node.js Vercel Functions in `api/`. All data (settings, site content, comments, guests, follows) lives in a single versioned JSON document in a private Vercel Blob store, written with optimistic concurrency.
 - **Authentication**: admins use JWTs (HS256) issued by the session endpoint; guests use an access key sent as the `x-access-key` header, published by the public config endpoint.
-- **Hosting**: Vercel (static hosting, serverless functions, Blob storage) with the custom domain `yunikah.xsrazy.web.id`.
+- **Hosting**: Vercel (static hosting, serverless functions, Blob storage) with the custom domain `yuunikah.xsrazy.web.id`.
 
 ### API
 

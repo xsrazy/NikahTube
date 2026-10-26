@@ -1,5 +1,5 @@
 // ============================================================
-// NIKAH TUBE — undangan digital ala platform video.
+// YUUNIKAH — undangan digital ala platform video.
 // Semua konten halaman ini datang dari backend (GET /api/config)
 // dan diatur lewat dashboard (/dashboard). Nilai DEFAULT di bawah
 // hanya cadangan kalau API sedang tidak bisa dihubungi.
@@ -29,7 +29,7 @@ const DEFAULT_SITE = {
   wrapped_match: "100%", wrapped_genre: "Takdir", wrapped_collab: "Usra × Zee",
   gift1_bank: "SeaBank", gift1_number: "123456784848", gift1_owner: "Rahmatul Usra",
   gift2_bank: "DANA", gift2_number: "081234561748", gift2_owner: "Rahmatul Usra",
-  gallery_urls: [1, 2, 3, 4, 5, 6].map((n) => "https://picsum.photos/seed/nikahtube" + n + "/800/450").join("\n"),
+  gallery_urls: [1, 2, 3, 4, 5, 6].map((n) => "https://picsum.photos/seed/yuunikah" + n + "/800/450").join("\n"),
   share_text: "",
 };
 let SITE = { ...DEFAULT_SITE };
@@ -227,8 +227,8 @@ function esc(t) {
   return String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 let wishes = [];
-const OWN_KEY = "nikahtube_own_v1";
-const LIKE_KEY = "nikahtube_likes_v1";
+const OWN_KEY = "yuunikah_own_v1";
+const LIKE_KEY = "yuunikah_likes_v1";
 const store = {
   get(k) { try { return JSON.parse(localStorage.getItem(k)) || {}; } catch (e) { return {}; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* abaikan */ } },
@@ -545,8 +545,8 @@ function applySite() {
   const year = String(SITE.wedding_iso || "").slice(0, 4) || "2050";
   const duo = SITE.groom_short + " & " + SITE.bride_short;
   const subtitlePart = String(SITE.album_subtitle || "").split("•")[0].trim();
-  document.title = "NikahTube — " + duo + ": " + subtitlePart;
-  setText("#coverLabel", "NIKAH TUBE ORIGINAL • PREMIERE " + year);
+  document.title = "YuuNikah — " + duo + ": " + subtitlePart;
+  setText("#coverLabel", "YUUNIKAH ORIGINAL • PREMIERE " + year);
   const ct = $("#coverTitle");
   if (ct) ct.innerHTML = esc(SITE.album_title || duo) + ":<br>" + esc(subtitlePart);
   setText("#videoTitle", (SITE.album_title || duo) + ": " + subtitlePart);
@@ -632,7 +632,7 @@ function applySite() {
 function buildShare() {
   const url = encodeURIComponent(location.href);
   const text = encodeURIComponent(SITE.share_text ||
-    ("Tonton undangan pernikahan " + SITE.groom_short + " & " + SITE.bride_short + " di NikahTube: undangan digital ala YouTube, gratis & open source!"));
+    ("Tonton undangan pernikahan " + SITE.groom_short + " & " + SITE.bride_short + " di YuuNikah: undangan digital ala YouTube, gratis & open source!"));
   $("#shareWa").href = "https://wa.me/?text=" + text + "%20" + url;
   $("#shareTg").href = "https://t.me/share/url?url=" + url + "&text=" + text;
   $("#shareFb").href = "https://www.facebook.com/sharer/sharer.php?u=" + url;

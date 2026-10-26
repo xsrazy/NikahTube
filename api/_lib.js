@@ -1,4 +1,4 @@
-// Shared helpers for the NikahTube invitation API.
+// Shared helpers for the YuuNikah invitation API.
 // Database = one JSON document stored in a private Vercel Blob store.
 const crypto = require('crypto');
 
@@ -71,14 +71,14 @@ const defaultSite = () => ({
     gift2_number: '081234561748',
     gift2_owner: 'Rahmatul Usra',
     gallery_urls: [
-        'https://picsum.photos/seed/nikahtube1/800/450',
-        'https://picsum.photos/seed/nikahtube2/800/450',
-        'https://picsum.photos/seed/nikahtube3/800/450',
-        'https://picsum.photos/seed/nikahtube4/800/450',
-        'https://picsum.photos/seed/nikahtube5/800/450',
-        'https://picsum.photos/seed/nikahtube6/800/450',
+        'https://picsum.photos/seed/yuunikah1/800/450',
+        'https://picsum.photos/seed/yuunikah2/800/450',
+        'https://picsum.photos/seed/yuunikah3/800/450',
+        'https://picsum.photos/seed/yuunikah4/800/450',
+        'https://picsum.photos/seed/yuunikah5/800/450',
+        'https://picsum.photos/seed/yuunikah6/800/450',
     ].join('\n'),
-    share_text: 'Tonton undangan pernikahan kami di NikahTube!',
+    share_text: 'Tonton undangan pernikahan kami di YuuNikah!',
 });
 
 const defaultDB = () => ({

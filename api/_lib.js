@@ -193,6 +193,30 @@ async function blobDelete(urls) {
     }
 }
 
+// Best-effort delete of uploaded media blobs by their /api/media names
+// (used when the admin replaces a photo/audio: the old blob would
+// otherwise stay in the private store forever). Never throws: a failed
+// cleanup must not fail the admin action that triggered it.
+async function deleteMedia(names) {
+    for (const name of names) {
+        try {
+            const res = await fetch(`${BLOB_API}?prefix=${encodeURIComponent(name)}&limit=10`, {
+                headers: blobHeaders(),
+            });
+            if (!res.ok) {
+                continue;
+            }
+            const list = await res.json();
+            const blob = (list.blobs || []).find((b) => b.pathname === name);
+            if (blob) {
+                await blobDelete([blob.url]);
+            }
+        } catch (err) {
+            console.error(`media delete failed: ${err.message}`);
+        }
+    }
+}
+
 const saveDB = async (db) => {
     await blobWriteVersion(JSON.stringify(db));
     // Best-effort cleanup: keep only the two newest versions.
@@ -374,7 +398,12 @@ const getAuth = (req, db) => {
         return null;
     }
     const key = req.headers['x-access-key'];
-    if (key && key === db.settings.access_key) {
+    const stored = db.settings.access_key;
+    // Timing-safe compare (same length-guard pattern as the password
+    // check): a plain === would leak the key byte-by-byte via timing.
+    if (typeof key === 'string' && typeof stored === 'string'
+        && key.length === stored.length
+        && crypto.timingSafeEqual(Buffer.from(key), Buffer.from(stored))) {
         return { guest: true };
     }
     return null;
@@ -624,5 +653,5 @@ module.exports = {
     send, sendError, fail, httpError, readBody, rateLimit, resetRateLimit, clientIp,
     formatDate, filterBadWords, parsePresence, toPublic, buildTree,
     findComment, findByOwn, commentDepth, removeSubtree, countAll, countLikes,
-    defaultSite, countFollows,
+    defaultSite, countFollows, deleteMedia,
 };

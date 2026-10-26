@@ -39,15 +39,17 @@ module.exports = async (req, res) => {
                 return sendError(res, 401, 'Invalid access key');
             }
             const body = await readBody(req);
-            const name = String(body.name || '').trim();
-            let text = String(body.comment || '').trim();
-            if (name.length === 0) {
+            // Strict types: String() coercion used to turn {comment: {}}
+            // into the literal "[object Object]" in the public guestbook.
+            const name = typeof body.name === 'string' ? body.name.trim() : null;
+            let text = typeof body.comment === 'string' ? body.comment.trim() : null;
+            if (name === null || name.length === 0) {
                 return sendError(res, 400, 'Silakan masukkan nama Anda.');
             }
             if (name.length > MAX_NAME) {
                 return sendError(res, 400, 'Nama terlalu panjang.');
             }
-            if (text.length === 0) {
+            if (text === null || text.length === 0) {
                 return sendError(res, 400, 'Komentar tidak boleh kosong.');
             }
             if (text.length > MAX_COMMENT) {

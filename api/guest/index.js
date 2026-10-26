@@ -18,16 +18,24 @@ module.exports = async (req, res) => {
             if (!auth || !auth.admin) {
                 return sendError(res, 401, 'Unauthorized');
             }
+            // Same per/next slicing as the comment list, with a generous
+            // default (1000) so the dashboard's full-list render keeps
+            // working for any realistic guest list.
+            const per = Math.max(1, Math.min(1000, parseInt(req.query.per, 10) || 1000));
+            const next = Math.max(0, parseInt(req.query.next, 10) || 0);
             const guests = [...db.guests]
                 .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                .slice(next, next + per)
                 .map(toGuest);
             return send(res, 200, guests);
         }
 
         if (req.method === 'POST') {
             const body = await readBody(req);
-            const name = String(body.name || '').trim().replace(/\s+/g, ' ');
-            if (name.length === 0) {
+            // Strict type: String() coercion used to turn {name: 123}
+            // into the stored name "123".
+            const name = typeof body.name === 'string' ? body.name.trim().replace(/\s+/g, ' ') : null;
+            if (name === null || name.length === 0) {
                 return sendError(res, 400, 'Nama tamu tidak boleh kosong');
             }
             if (name.length > 100) {

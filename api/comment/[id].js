@@ -131,6 +131,12 @@ module.exports = async (req, res) => {
                     throw httpError(404, 'Komentar tidak ditemukan.');
                 }
                 if (req.method === 'PUT') {
+                    // Strict type: a non-string comment used to be
+                    // coerced into "[object Object]" and stored.
+                    if (body.comment !== undefined && body.comment !== null
+                        && typeof body.comment !== 'string') {
+                        throw httpError(400, 'Komentar tidak valid.');
+                    }
                     // Pinned comments (dashboard feature): only admins
                     // may pin, only top-level comments can be pinned, and
                     // there is exactly one pinned comment at a time.
@@ -184,6 +190,12 @@ module.exports = async (req, res) => {
                 }
                 if (!db.settings.can_delete && !isAdmin) {
                     throw httpError(403, 'Hapus komentar sedang dimatikan.');
+                }
+                // Guests must not destroy other people's replies: a
+                // non-admin delete of a comment that has replies is
+                // rejected (admin deletes still remove the subtree).
+                if (!isAdmin && db.comments.some((c) => c.parent === target.uuid)) {
+                    throw httpError(400, 'Komentar ini memiliki balasan, jadi tidak dapat dihapus.');
                 }
                 removeSubtree(db, target.uuid);
                 return true;

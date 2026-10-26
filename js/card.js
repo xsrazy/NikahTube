@@ -78,7 +78,7 @@ export const card = (() => {
                 action += `<button onclick="comment.pin(this)" data-uuid="${comment.uuid}" data-pinned="${pinned}" class="cmt-btn${pinned ? ' active' : ''}" offline-disabled>${pinned ? 'Lepas sematan' : 'Sematkan'}</button>`;
             }
             action += `<button onclick="comment.remove(this)" data-uuid="${comment.uuid}" class="cmt-btn" data-own="${comment.own}" offline-disabled>Delete</button>`;
-        } else if (owns.has(comment.uuid) && (config.get('can_delete') == true || config.get('can_delete') === undefined)) {
+        } else if (owns.has(comment.uuid) && comment.comments.length === 0 && (config.get('can_delete') == true || config.get('can_delete') === undefined)) {
             action += `<button onclick="comment.remove(this)" data-uuid="${comment.uuid}" class="cmt-btn" offline-disabled>Delete</button>`;
         }
 

@@ -1,17 +1,17 @@
-# NikahTube — A YouTube-Style Digital Wedding Invitation
+# YuuNikah — A YouTube-Style Digital Wedding Invitation
 
 A digital wedding invitation dressed as a video watch page: a premiere thumbnail, a working Subscribe button, a comments section as the guestbook, and an Up Next gallery. Free and open source.
 
-**Live demo:** https://nikahtube.xsrazy.web.id
-**Dashboard:** https://nikahtube.xsrazy.web.id/dashboard
+**Live demo:** https://yunikah.xsrazy.web.id
+**Dashboard:** https://yunikah.xsrazy.web.id/dashboard
 
-![NikahTube — Usra & Zee: The Wedding Premiere](assets/images/og-image.jpg)
+![YuuNikah — Usra & Zee: The Wedding Premiere](assets/images/og-image.jpg)
 
-> NikahTube is inspired by the interface of online video platforms. It is not affiliated with or endorsed by YouTube.
+> YuuNikah is inspired by the interface of online video platforms. It is not affiliated with or endorsed by YouTube.
 
 ## About
 
-NikahTube wraps a complete wedding invitation (premiere countdown, event details, gallery, RSVP, guestbook, love gift, background music) in the most familiar interface on the internet: a video page. The wedding is a "premiere": there is a 16:9 thumbnail with a play button, a live countdown to the big day, a "Set Reminder" button for saving the date, a couple's channel with a Subscribe button that is actually recorded by the backend, and a comments section that doubles as the guestbook.
+YuuNikah wraps a complete wedding invitation (premiere countdown, event details, gallery, RSVP, guestbook, love gift, background music) in the most familiar interface on the internet: a video page. The wedding is a "premiere": there is a 16:9 thumbnail with a play button, a live countdown to the big day, a "Set Reminder" button for saving the date, a couple's channel with a Subscribe button that is actually recorded by the backend, and a comments section that doubles as the guestbook.
 
 Everything on the page is managed from the admin dashboard: the couple's names, the thumbnail, the music, the schedule, the venue, the gallery, even the love gift account numbers. No code changes are needed to make the invitation yours.
 
@@ -34,7 +34,7 @@ Everything on the page is managed from the admin dashboard: the couple's names, 
 - **Frontend**: vanilla HTML, CSS, and JavaScript. No framework, no build step, no CDN. The public page is a single `index.html` with `css/app.css` and `js/app.js`; the dashboard is a custom YouTube Studio-style interface (`dashboard.html` with `css/dashboard.css` and vanilla JS in `js/`).
 - **Backend**: zero-dependency Node.js Vercel Functions in `api/`. All data (settings, site content, comments, guests, follows) lives in a single versioned JSON document in a private Vercel Blob store, written with optimistic concurrency.
 - **Authentication**: admins use JWTs (HS256) issued by the session endpoint; guests use an access key sent as the `x-access-key` header, published by the public config endpoint.
-- **Hosting**: Vercel (static hosting, serverless functions, Blob storage) with the custom domain `nikahtube.xsrazy.web.id`.
+- **Hosting**: Vercel (static hosting, serverless functions, Blob storage) with the custom domain `yunikah.xsrazy.web.id`.
 
 ### API
 
@@ -72,7 +72,7 @@ Names only. Values belong in the Vercel project settings, never in this reposito
 
 ## Credits
 
-Created by Rahmatul Usra. NikahTube is part of a family of platform-parody wedding invitation templates: [Nikah](https://github.com/xsrazy/Nikah), [NikahFix](https://github.com/xsrazy/NikahFix), and [Wedify](https://github.com/xsrazy/Wedify).
+Created by Rahmatul Usra. YuuNikah is part of a family of platform-parody wedding invitation templates: [Nikah](https://github.com/xsrazy/Nikah), [NikahFix](https://github.com/xsrazy/NikahFix), and [Wedify](https://github.com/xsrazy/Wedify).
 
 ## License
 
